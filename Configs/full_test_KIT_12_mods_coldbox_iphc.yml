@@ -1,0 +1,59 @@
+maintag: IPHC_coldBox
+
+ladder: yes
+single_module_box: no
+
+n_boards: 1
+n_opticals: 12
+
+moduleinfo:
+  board_0_optical_0: 2S_18_6_KIT-10019
+  board_0_optical_1: 2S_18_6_KIT-10018
+  board_0_optical_2: 2S_18_6_KIT-10017
+  board_0_optical_3: 2S_18_6_KIT-10009
+  board_0_optical_4: 2S_18_6_KIT-10013
+  board_0_optical_5: 2S_18_6_KIT-10015
+  board_0_optical_6: 2S_18_6_KIT-10011
+  board_0_optical_7: 2S_18_6_KIT-10010
+  board_0_optical_8: 2S_18_6_KIT-10008
+  board_0_optical_9: 2S_18_6_KIT-10007
+  board_0_optical_10: 2S_18_6_KIT-10020
+  board_0_optical_11: 2S_18_6_KIT-10016
+
+
+# strip noise histogram names (hybrid level)
+strip_noise_hname_hybrid_level: StripChannelNoise
+strip_noise_hname_hybrid_level_bottom: StripChannelNoiseBottom
+strip_noise_hname_hybrid_level_top: StripChannelNoiseTop
+
+# strip noise histogram names (chip level)
+strip_noise_hname_chip_level: ChannelNoise
+strip_noise_hname_chip_level_bottom: ChannelNoiseBottom
+strip_noise_hname_chip_level_top: ChannelNoiseTop
+
+# common noise histogram names (hybrid level)
+common_noise_hname_hybrid_level: CommonNoiseHits_OccupancyDriven
+common_noise_hname_hybrid_level_bottom: CommonNoiseHitsBottom_OccupancyDriven
+common_noise_hname_hybrid_level_top: CommonNoiseHitsTop_OccupancyDriven
+
+# common noise histogram names (chip level)
+common_noise_hname_chip_level: CommonNoiseHits_OccupancyDriven
+common_noise_hname_chip_level_bottom: CommonNoiseHitsBottom_OccupancyDriven
+common_noise_hname_chip_level_top: CommonNoiseHitsTop_OccupancyDriven
+
+# common noise module level
+common_noise_hname_module_level: CommonNoiseHits_OccupancyDriven
+common_noise_hname_module_level_bottom: CommonNoiseHitsBottom_OccupancyDriven
+common_noise_hname_module_level_top: CommonNoiseHitsTop_OccupancyDriven
+
+
+
+files:
+  RoomTemp:
+    Run1:
+      #tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_41/Results.root
+      #tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/MonitorDQM_2025-06-18_16-17-45_Run_73.root
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_209/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_209/MonitorDQM_2025-07-29_08-56-20.root
+
+output: /Users/gsaha/Work/IPHC/TrackerUpgrade/Output

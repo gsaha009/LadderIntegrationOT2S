@@ -1,0 +1,19 @@
+# ---------------------------------------- #
+# --- Used by the Dataloader & Plotter --- #
+# ---------------------------------------- #
+
+# must be switched off for quick test results
+# optional for full test results or for results from db (always full test)
+check_common_noise : yes
+
+# fitting common mode noise
+fit_common_noise : yes
+
+# enable potato like grading style
+potato_like_grading : no
+
+# check sensor temperature
+check_sensor_temperature: yes
+
+# comparing different setup
+compare_two_setup: yes
