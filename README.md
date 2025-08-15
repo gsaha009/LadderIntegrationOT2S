@@ -21,11 +21,13 @@ Generate quick, insightful plots from **Ph2_ACF** quick/full test results for **
    - Comparative performance between setups
 
 ## 🛠 Requirements
-- Python 3.8+
-- NumPy, Matplotlib, Pandas
-
+- Use `Anaconda` and the [`conda_requirements.txt`]() file to setup the environment
 
 
 Install requirements:
 ```bash
-pip install -r requirements.txt
+# conda installation
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+
+# 
