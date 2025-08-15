@@ -30,4 +30,21 @@ Install requirements:
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash Miniconda3-latest-Linux-x86_64.sh
 
-# 
+# use the `yml` and build the environment
+conda env create -f environment.yml
+
+# Set up the plotter
+git clone https://github.com/gsaha009/LadderIntegrationOT2S.git
+```
+
+## Structure of the code:
+- `Configs` :
+  -  Here you can find some `yaml` files, which are the config files with information about input, output, histogram names, module_IDs etc.
+  - `tests.yml` config with some switches
+- `DataLoader.py` :
+- `Plotter.py` :
+- `Fitter.py` :
+- `main.py` :
+
+
+1. `cd LadderIntegrationOT2S/Configs`  
