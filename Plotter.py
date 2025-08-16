@@ -1286,6 +1286,13 @@ class Plotter:
         
             logger.info(f"Setup-1 : {setup_1}, Setup-2 : {setup_2}")
         
+            tick_offset = 0.1
+            box_offset = 0.1
+            if self.testinfo.get("are_same_modules") == False:
+                moduleIDs = np.array(allModuleIDs).reshape(2,-1).T.tolist()
+                moduleIDs = [f"{mid[0]}\n{mid[1]}" for mid in moduleIDs]
+                tick_offset = 0.22
+                box_offset = 0.52
 
             # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
             #                                     WARNING: FEW THIGS ARE HARDCODED                                         #
@@ -1296,13 +1303,6 @@ class Plotter:
                 sensor_temps_setup_1 = np.array(sensor_temps_setup[setup_1]['RoomTemp'])
                 sensor_temps_setup_2 = np.array(sensor_temps_setup[setup_2]['RoomTemp'])
                 #from IPython import embed; embed(); exit()
-                tick_offset = 0.1
-                box_offset = 0.1
-                if self.testinfo.get("are_same_modules") == False:
-                    moduleIDs = np.array(allModuleIDs).reshape(2,-1).T.tolist()
-                    moduleIDs = [f"{mid[0]}\n{mid[1]}" for mid in moduleIDs]
-                    tick_offset = 0.22
-                    box_offset = 0.52
                 
                 self.plot_basic(x          = np.arange(len(moduleIDs)),
                                 data_list  = [np.concatenate((sensor_temps_setup_1[:,None], np.zeros_like(sensor_temps_setup_1)[:,None]), axis=1).tolist(),
