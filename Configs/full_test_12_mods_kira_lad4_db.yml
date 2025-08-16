@@ -47,6 +47,14 @@ common_noise_hname_module_level_bottom:
 common_noise_hname_module_level_top:
  - ModuleHitsTop
 
+# pedestal at CBC level
+pede_hname_chip_level:
+ - ChannelPedestal
+ - ChannelPedestalDistribution
+
+
+
+
 
 files:
   2S_18_6_KIT-10019:

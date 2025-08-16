@@ -67,22 +67,24 @@ class DataLoader:
         noise_dict = {}
         root_dir  = f"Detector/Board_{ibrd}/OpticalGroup_{iopt}"
 
-        hname_hb     = kwargs.get("hname_hb", "")
-        hname_hb_bot = kwargs.get("hname_hb_bot", "")
-        hname_hb_top = kwargs.get("hname_hb_top", "")
+        # Module level hists if any
+        hname_mod = kwargs.get("hname_mod", [])
+        hname_mod_bot = kwargs.get("hname_mod_bot", [])
+        hname_mod_top = kwargs.get("hname_mod_top", [])
 
-        hname_cbc     = kwargs.get("hname_cbc", "")
-        hname_cbc_bot = kwargs.get("hname_cbc_bot", "")
-        hname_cbc_top = kwargs.get("hname_cbc_top", "")
+        
+        hname_hb     = kwargs.get("hname_hb", [])
+        hname_hb_bot = kwargs.get("hname_hb_bot", [])
+        hname_hb_top = kwargs.get("hname_hb_top", [])
+
+        hname_cbc     = kwargs.get("hname_cbc", [])
+        hname_cbc_bot = kwargs.get("hname_cbc_bot", [])
+        hname_cbc_top = kwargs.get("hname_cbc_top", [])
         
         cbc_level  = kwargs.get("cbc_level", True)
         noise_type = kwargs.get("noise_type", "") # strip or common
         
 
-        # Module level hists if any
-        hname_mod = kwargs.get("hname_mod", None)
-        hname_mod_bot = kwargs.get("hname_mod_bot", None)
-        hname_mod_top = kwargs.get("hname_mod_top", None)
 
         if (noise_type == "common") and (self.testinfo.get("check_common_noise") == True):
             #print(f"{root_dir}/D_B({ibrd})_{hname_mod}_OpticalGroup({iopt})")
@@ -148,7 +150,31 @@ class DataLoader:
 
             
         return noise_dict
+
+
+
+    def __prepare_pede_data(self, root_ptr, ibrd, iopt, **kwargs):
+        pede_dict = {}
+        root_dir  = f"Detector/Board_{ibrd}/OpticalGroup_{iopt}"
+
+        hname_cbc     = kwargs.get("hname_cbc", [])
+                
+        #hb1 = 2*iopt
+        #hb2 = 2*iopt+1
+
+        for idx in range(2):
+            pede_dict[f"pedestal_hb{idx}"] = {}
+            hb = 2*iopt + idx
+            for icbc in range(8):
+                hnames = [f"{root_dir}/Hybrid_{hb}/CBC_{icbc}/D_B({ibrd})_O({iopt})_H({hb})_{name}_Chip({icbc})" for name in hname_cbc]
+                hnames = hnames + [f"{root_dir}/Hybrid_{hb}/Chip_{icbc}/D_B({ibrd})_O({iopt})_H({hb})_{name}_Chip({icbc})" for name in hname_cbc]
+                ch_pede_distr_hb_cbc = self.__get_hist(root_ptr, hnamelist=hnames)
+                ch_pede_distr_hb_cbc_list = self.__get_hist_array(ch_pede_distr_hb_cbc)
+                pede_dict[f"pedestal_hb{idx}"][f"CBC_{icbc}"] = ch_pede_distr_hb_cbc_list
             
+        return pede_dict
+
+    
 
 
     def __get_noise_data_for_ladder(self, nboards, nopticals, root_file_info, module_info):
@@ -242,6 +268,16 @@ class DataLoader:
                             main_noise_dict[module_tag][temperature_key][test_iter].update(common_noise_dict)
                         else:
                             logger.warning("skip checking common mode noise")
+
+
+                        if self.testinfo.get("check_pedestal") == True:
+                            pede_dict = self.__prepare_pede_data(root_ptr,
+                                                                 ibrd,
+                                                                 iopt,
+                                                                 hname_cbc=self.fileinfo['pede_hname_chip_level'])
+                            main_noise_dict[module_tag][temperature_key][test_iter].update(pede_dict)
+                        else:
+                            logger.info("skip checking pedestal info")
 
 
 
@@ -350,14 +386,21 @@ class DataLoader:
                             
                             main_noise_dict[module_tag][temperature_key][test_iter].update(common_noise_dict)
 
+                        if self.testinfo.get("check_pedestal") == True:
+                            pede_dict = self.__prepare_pede_data(root_ptr,
+                                                                 ibrd,
+                                                                 iopt,
+                                                                 hname_cbc=self.fileinfo['pede_hname_chip_level'])
+                            main_noise_dict[module_tag][temperature_key][test_iter].update(pede_dict)
+                        else:
+                            logger.info("skip checking pedestal info")
+
         return main_noise_dict
 
 
-    
-    
-    
+        
 
-    def getNoiseData(self):
+    def getData(self):
         """
           Read the dictionary contains file names and other conditions required for plotting
           

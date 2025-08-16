@@ -121,6 +121,7 @@ class Plotter:
         mean_init = kwargs.get("mean_init", 500.0)
         sigma_init = kwargs.get("sigma_init", 100.0)
         nticks = kwargs.get("nticks", None)
+        tick_offset = kwargs.get("tick_offset", 0.1)
         
         fig, ax = plt.subplots(figsize=basics["size"])
         hep.cms.text(basics["heplogo"], loc=basics["logoloc"]) # CMS
@@ -188,9 +189,12 @@ class Plotter:
                 ax.set_xticks(tick_locs)
                 ax.set_xticklabels(tick_labels, rotation=90, ha="right", rotation_mode="anchor", fontsize=13)
             else:                
-                ax.set_xticks(range(len(xticklabels)), labels=xticklabels,
-                              rotation=90, ha="right", rotation_mode="anchor",
-                              fontsize=13)
+                ticks_ = [x-tick_offset for x in list(range(len(xticklabels)))]
+                ax.set_xticks(ticks_)
+                ax.set_xticklabels(xticklabels, rotation=90, ha='right', rotation_mode='anchor', fontsize=13)
+                #ax.set_xticks(range(len(xticklabels)), labels=xticklabels,
+                #              rotation=90, ha="right", rotation_mode="anchor",
+                #              fontsize=13)
         else:
             ax.set_xlabel(xlabel)
 
@@ -236,6 +240,7 @@ class Plotter:
         markerstyles = kwargs.get("markerstyles", basics["markerstyles"])
         linestyles = kwargs.get("linestyles", basics["linestyles"])
         colors = kwargs.get("colors", basics["colors"])
+        tick_offset = kwargs.get("tick_offset", 0.1)
         
         fig, ax = plt.subplots(figsize=basics["size"])
         hep.cms.text(basics["heplogo"], loc=basics["logoloc"]) # CMS
@@ -263,9 +268,14 @@ class Plotter:
         ax.legend(fontsize=13, framealpha=1, facecolor='white', ncols=2)
         
         if xticklabels:
-            ax.set_xticks(range(len(xticklabels)), labels=xticklabels,
-                          rotation=90, ha="right", rotation_mode="anchor",
-                          fontsize=13)
+            #from IPython import embed; embed(); exit()
+            ticks_ = [x-tick_offset for x in list(range(len(xticklabels)))]
+            ax.set_xticks(ticks_)
+            #ax.set_xticks(range(len(xticklabels)), labels=xticklabels,
+            #              rotation=90, ha="right", rotation_mode="anchor",
+            #              fontsize=13)
+            ax.set_xticklabels(xticklabels, rotation=90, ha='right', rotation_mode='anchor', fontsize=13)
+
         else:
             ax.set_xlabel(xlabel)
 
@@ -294,15 +304,16 @@ class Plotter:
 
         xticklabels = kwargs.get("xticklabels", None)
         ylabel      = kwargs.get("ylabel", "var")
-        outdir      = kwargs.get("outdir", "../Output")        
+        outdir      = kwargs.get("outdir", "../Output")
+        offset      = kwargs.get("box_offset", 0.1)
         
         if xticklabels is None:
             xticklabels = list(range(len(x)))
         
         noise_1 = np.array(data_list_1)
-        noise_val_1 = noise_1[:,:,0]
+        noise_val_1 = noise_1[:,:,0] if noise_1.ndim == 3 else noise_1[:,0]
         noise_2 = np.array(data_list_2)
-        noise_val_2 = noise_2[:,:,0]
+        noise_val_2 = noise_2[:,:,0] if	noise_2.ndim ==	3 else noise_2[:,0]
 
         basics = self.__basic_settings()
 
@@ -343,6 +354,7 @@ class Plotter:
             box.set(facecolor='none') 
 
         middle_positions = (positions1 + positions2) / 2
+        middle_positions = middle_positions - offset
         ax.set_xticks(middle_positions)
         ax.set_xticklabels(xticklabels, rotation=90, ha='right', rotation_mode='anchor', fontsize=15)
 
@@ -454,6 +466,10 @@ class Plotter:
     def __get_noise_mean_sigma_for_plotting(self, arr):
         return np.concatenate((np.mean(arr, axis=1)[:,None], np.std(arr, axis=1)[:,None]), axis=1)
     
+    def __rearrange_arrs(self, arr):
+        arr = np.array(arr).reshape(2,-1).T.reshape(-1)
+        return arr
+
     
     def plotEverything(self):
 
@@ -611,7 +627,7 @@ class Plotter:
                     strip_noise_hb1_top = strip_noise_hb1_top_dict['allCBC']
                     strip_noise_hb1_top_mod[martaTemp].append(strip_noise_hb0_top)                    
                     
-
+                    
                     self.plot_basic(x          = np.arange(len(strip_noise_hb0)),
                                     data_list  = [strip_noise_hb0, strip_noise_hb1],
                                     legends    = ["hybrid 0", "hybrid 1"],
@@ -627,7 +643,7 @@ class Plotter:
                     self.plot_basic(x          = np.arange(len(strip_noise_hb0_top)),
                                     data_list  = [strip_noise_hb0_bot, strip_noise_hb1_bot],
                                     legends    = ["hybrid 0", "hybrid 1"],
-                                    title      = f"StripNoise_BottomSensor_{moduleID}",
+                                    title      = f"StripNoise_Bottom_{moduleID}",
                                     name       = f"Plot_StripNoise_bothHybrids_BottomSensor_{martaTemp}_{moduleID}_{datakey}",
                                     xlabel     = "Channel",
                                     ylabel     = "Noise [VcTh]",
@@ -638,7 +654,7 @@ class Plotter:
                     self.plot_basic(x          = np.arange(len(strip_noise_hb0_top)),
                                     data_list  = [strip_noise_hb0_top, strip_noise_hb1_top],
                                     legends    = ["hybrid 0", "hybrid 1"],
-                                    title      = f"StripNoise_TopSensor_{moduleID}",
+                                    title      = f"StripNoise_Top_{moduleID}",
                                     name       = f"Plot_StripNoise_bothHybrids_TopSensor_{martaTemp}_{moduleID}_{datakey}",
                                     xlabel     = "Channel",
                                     ylabel     = "Noise [VcTh]",
@@ -671,7 +687,7 @@ class Plotter:
                                                   strip_noise_hb0_dict['CBC_6'],
                                                   strip_noise_hb0_dict['CBC_7']],
                                     legends    = ["Chip 0", "Chip 1", "Chip 2", "Chip 3", "Chip 4", "Chip 5", "Chip 6", "Chip 7"],
-                                    title      = f"StripNoiseCBC_Hybrid0_{moduleID}",
+                                    title      = f"StripNoise_Hb0_{moduleID}",
                                     name       = f"Hist_StripNoiseCBC_Hybrid0_bothSensors_{martaTemp}_{moduleID}_{datakey}",
                                     xlabel     = "Noise [VcTh]",
                                     ylabel     = "Entries",
@@ -691,7 +707,7 @@ class Plotter:
                                                   strip_noise_hb1_dict['CBC_6'],
                                                   strip_noise_hb1_dict['CBC_7']],
                                     legends    = ["Chip 0", "Chip 1", "Chip 2", "Chip 3", "Chip 4", "Chip 5", "Chip 6", "Chip 7"],
-                                    title      = f"StripNoiseCBC_Hybrid1_{moduleID}",
+                                    title      = f"StripNoise_Hb1_{moduleID}",
                                     name       = f"Hist_StripNoiseCBC_Hybrid1_bothSensors_{martaTemp}_{moduleID}_{datakey}",
                                     xlabel     = "Noise [VcTh]",
                                     ylabel     = "Entries",
@@ -704,69 +720,59 @@ class Plotter:
                     # Get the mean and std of noise per CBC
                     strip_noise_hb0_bot_per_cbc_mean_std_list = self.__get_mean_std_per_cbc(strip_noise_hb0_bot_dict)
                     strip_noise_hb0_top_per_cbc_mean_std_list = self.__get_mean_std_per_cbc(strip_noise_hb0_top_dict)
-                    # 
-                    self.plot_basic(x          = np.arange(8),
-                                    data_list  = [strip_noise_hb0_bot_per_cbc_mean_std_list,
-                                                  strip_noise_hb0_top_per_cbc_mean_std_list],
-                                    legends    = ["Bottom Sensor",
-                                                  "Top Sensor"],
-                                    title      = f"StripNoiseCBC_Hybrid0_{moduleID}",
-                                    name       = f"Plot_StripNoise_perCBC_Hybrid0_bothSensors_{martaTemp}_{moduleID}_{datakey}",
-                                    xlabel     = "CBC",
-                                    ylabel     = "Noise [VcTh]",
-                                    ylim       = [2.0,10.0],
-                                    xticklabels= [f"CBC_{i}" for i in range(8)],
-                                    marker     = "o",
-                                    linewidth  = 1.2,
-                                    markersize = 3.5,
-                                    capsize    = 2.0,
-                                    elinewidth = 2.1,
-                                    linestyles = 8*["-"],
-                                    outdir     = _outdirCBC)
+                    #
+                    self.plot_group(x           = np.arange(8),
+                                    data_list   = [[strip_noise_hb0_bot_per_cbc_mean_std_list,
+                                                    strip_noise_hb0_top_per_cbc_mean_std_list]],
+                                    legends     = [["Bottom Sensor",
+                                                    "Top Sensor"]],
+                                    title       = f"StripNoise_Hb0_{martaTemp}_{moduleID}",
+                                    name        = f"Plot_StripNoise_perCBC_Hybrid0_bothSensors_{martaTemp}_{moduleID}_{datakey}",
+                                    xticklabels = [f"CBC_{i}" for i in range(8)],
+                                    ylim        = [2.0,10.0],
+                                    ylabel      = "Noise [VcTh]",
+                                    outdir      = _outdirCBC,
+                                    marker      = "o",
+                                    markersize  = 2.5,
+                                    capsize     = 1.5,
+                                    elinewidth  = 1.0)
                     
                     strip_noise_hb1_bot_per_cbc_mean_std_list = self.__get_mean_std_per_cbc(strip_noise_hb1_bot_dict)
                     strip_noise_hb1_top_per_cbc_mean_std_list = self.__get_mean_std_per_cbc(strip_noise_hb1_top_dict)
+                    self.plot_group(x           = np.arange(8),
+                                    data_list   = [[strip_noise_hb1_bot_per_cbc_mean_std_list,
+                                                    strip_noise_hb1_top_per_cbc_mean_std_list]],
+                                    legends     = [["Bottom Sensor",
+                                                    "Top Sensor"]],
+                                    title       = f"StripNoise_Hb1_{martaTemp}_{moduleID}",
+                                    name        = f"Plot_StripNoise_perCBC_Hybrid1_bothSensors_{martaTemp}_{moduleID}_{datakey}",
+                                    xticklabels = [f"CBC_{i}" for i in range(8)],
+                                    ylim        = [2.0,10.0],
+                                    ylabel      = "Noise [VcTh]",
+                                    outdir      = _outdirCBC,
+                                    marker      = "o",
+                                    markersize  = 2.5,
+                                    capsize     = 1.5,
+                                    elinewidth  = 1.0)
 
-                    self.plot_basic(x          = np.arange(8),
-                                    data_list  = [strip_noise_hb1_bot_per_cbc_mean_std_list,
-                                                  strip_noise_hb1_top_per_cbc_mean_std_list],
-                                    legends    = ["Bottom Sensor",
-                                                  "Top Sensor"],
-                                    title      = f"StripNoiseCBC_Hybrid1_{moduleID}",
-                                    name       = f"Plot_StripNoise_perCBC_Hybrid1_bothSensors_{martaTemp}_{moduleID}_{datakey}",
-                                    xlabel     = "CBC",
-                                    ylabel     = "Noise [VcTh]",
-                                    ylim       = [2.0,10.0],
-                                    xticklabels= [f"CBC_{i}" for i in range(8)],
-                                    marker     = "o",
-                                    linewidth  = 1.2,
-                                    markersize = 3.5,
-                                    capsize    = 2.0,
-                                    elinewidth = 2.1,
-                                    linestyles = 8*["-"],
-                                    outdir     = _outdirCBC)
-
+                    
                     strip_noise_hb0_per_cbc_mean_std_list = self.__get_mean_std_per_cbc(strip_noise_hb0_dict)
                     strip_noise_hb1_per_cbc_mean_std_list = self.__get_mean_std_per_cbc(strip_noise_hb1_dict)
-
-                    self.plot_basic(x          = np.arange(8),
-                                    data_list  = [strip_noise_hb0_per_cbc_mean_std_list,
-                                                  strip_noise_hb1_per_cbc_mean_std_list],
-                                    legends    = ["Hybrid 0",
-                                                  "Hybrid 1"],
-                                    title      = f"StripNoiseCBC_{moduleID}",
-                                    name       = f"Plot_StripNoise_perCBC_bothHybrids_bothSensors_{martaTemp}_{moduleID}_{datakey}",
-                                    xlabel     = "CBC",
-                                    ylabel     = "Noise [VcTh]",
-                                    ylim       = [2.0,10.0],
-                                    xticklabels= [f"CBC_{i}" for i in range(8)],
-                                    marker     = "o",
-                                    linewidth  = 1.2,
-                                    markersize = 3.5,
-                                    capsize    = 2.0,
-                                    elinewidth = 2.1,
-                                    linestyles = 8*["-"],
-                                    outdir     = _outdirCBC)
+                    self.plot_group(x           = np.arange(8),
+                                    data_list   = [[strip_noise_hb0_per_cbc_mean_std_list,
+                                                    strip_noise_hb1_per_cbc_mean_std_list]],
+                                    legends     = [["Hybrid 0",
+                                                    "Hybrid 1"]],
+                                    title       = f"StripNoise_{martaTemp}_{moduleID}",
+                                    name        = f"Plot_StripNoise_perCBC_bothHybrids_bothSensors_{martaTemp}_{moduleID}_{datakey}",
+                                    xticklabels = [f"CBC_{i}" for i in range(8)],
+                                    ylim        = [2.0,10.0],
+                                    ylabel      = "Noise [VcTh]",
+                                    outdir      = _outdirCBC,
+                                    marker      = "o",
+                                    markersize  = 2.5,
+                                    capsize     = 1.5,
+                                    elinewidth  = 1.0)
 
 
                     
@@ -877,7 +883,7 @@ class Plotter:
                         self.plot_basic(x          = np.arange(len(common_noise_hb0_top)),
                                         data_list  = [common_noise_hb0_top, common_noise_hb1_top],
                                         legends    = ["Hybrid 0", "Hybrid 1"],
-                                        title      = f"CMNoise_top_{martaTemp}_{moduleID}",
+                                        title      = f"CMNoise_Top_{martaTemp}_{moduleID}",
                                         name       = f"Plot_CommonModeNoise_bothHybrids_topSensor_{martaTemp}_{moduleID}_{datakey}",
                                         xlabel     = "Number of hits",
                                         ylabel     = "Number of events",
@@ -896,7 +902,7 @@ class Plotter:
                         self.plot_basic(x          = np.arange(len(common_noise_hb0_bot)),
                                         data_list  = [common_noise_hb0_bot, common_noise_hb1_bot],
                                         legends    = ["Hybrid 0", "Hybrid 1"],
-                                        title      = f"CMNoise_bot_{martaTemp}_{moduleID}",
+                                        title      = f"CMNoise_Bot_{martaTemp}_{moduleID}",
                                         name       = f"Plot_CommonModeNoise_bothHybrids_bottomSensor_{martaTemp}_{moduleID}_{datakey}",
                                         xlabel     = "Number of hits",
                                         ylabel     = "Number of events",
@@ -1012,6 +1018,85 @@ class Plotter:
                                         elinewidth  = 1.0)
                     else:
                         logger.warning("skip plotting common mode noise")
+
+
+
+                    if self.testinfo.get("check_pedestal") == True:
+                        pede_hb0_dict = noiseDict['pedestal_hb0']
+                        pede_hb1_dict = noiseDict['pedestal_hb1']
+                        # Total pede
+                        pede_hb0 = pede_hb0_dict['CBC_0'] + pede_hb0_dict['CBC_1'] + pede_hb0_dict['CBC_2'] + pede_hb0_dict['CBC_3'] + pede_hb0_dict['CBC_4'] + pede_hb0_dict['CBC_5'] + pede_hb0_dict['CBC_6'] + pede_hb0_dict['CBC_7']
+                        pede_hb1 = pede_hb1_dict['CBC_0'] + pede_hb1_dict['CBC_1'] + pede_hb1_dict['CBC_2'] + pede_hb1_dict['CBC_3'] + pede_hb1_dict['CBC_4'] + pede_hb1_dict['CBC_5'] + pede_hb1_dict['CBC_6'] + pede_hb1_dict['CBC_7']
+                        self.plot_basic(x          = np.arange(len(pede_hb0)),
+                                        data_list  = [pede_hb0, pede_hb1],
+                                        legends    = ["hybrid 0", "hybrid 1"],
+                                        title      = f"Pedestal_{moduleID}",
+                                        name       = f"Plot_Pedestal_bothHybrids_{martaTemp}_{moduleID}_{datakey}",
+                                        xlabel     = "Channel",
+                                        ylabel     = "Pedestal [VcTh]",
+                                        ylim       = [595.0,605.0],
+                                        outdir     = _outdir)
+                    
+                        self.hist_basic(bins       = np.linspace(590,610,80),
+                                        data_list  = [pede_hb0_dict['CBC_0'],
+                                                      pede_hb0_dict['CBC_1'],
+                                                      pede_hb0_dict['CBC_2'],
+                                                      pede_hb0_dict['CBC_3'],
+                                                      pede_hb0_dict['CBC_4'],
+                                                      pede_hb0_dict['CBC_5'],
+                                                      pede_hb0_dict['CBC_6'],
+                                                      pede_hb0_dict['CBC_7']],
+                                        legends    = ["Chip 0", "Chip 1", "Chip 2", "Chip 3", "Chip 4", "Chip 5", "Chip 6", "Chip 7"],
+                                        title      = f"PedestalCBC_Hybrid0_{moduleID}",
+                                        name       = f"Hist_PedestalCBC_Hybrid0_bothSensors_{martaTemp}_{moduleID}_{datakey}",
+                                        xlabel     = "Pedestal [VcTh]",
+                                        ylabel     = "Entries",
+                                        linewidth  = 1.2,
+                                        outdir     = _outdirCBC,
+                                        colors     = ["#0B1A2F", "#152C4D", "#1F3E6C", "#29508A", "#3362A9", "#3D74C7", "#4796E6", "#61B4FF"],
+                                        linestyles = 8*["-"])
+                        self.hist_basic(bins       = np.linspace(590,610,80),
+                                        data_list  = [pede_hb1_dict['CBC_0'],
+                                                      pede_hb1_dict['CBC_1'],
+                                                      pede_hb1_dict['CBC_2'],
+                                                      pede_hb1_dict['CBC_3'],
+                                                      pede_hb1_dict['CBC_4'],
+                                                      pede_hb1_dict['CBC_5'],
+                                                      pede_hb1_dict['CBC_6'],
+                                                      pede_hb1_dict['CBC_7']],
+                                        legends    = ["Chip 0", "Chip 1", "Chip 2", "Chip 3", "Chip 4", "Chip 5", "Chip 6", "Chip 7"],
+                                        title      = f"PedestalCBC_Hybrid1_{moduleID}",
+                                        name       = f"Hist_PedestalCBC_Hybrid1_bothSensors_{martaTemp}_{moduleID}_{datakey}",
+                                        xlabel     = "Pedestal [VcTh]",
+                                        ylabel     = "Entries",
+                                        linewidth  = 1.2,
+                                        outdir     = _outdirCBC,
+                                        colors     = ["#2E0000", "#4A0A0A", "#661515", "#821F1F", "#9E2A2A", "#BA3535", "#D65050", "#F26B6B"],
+                                        linestyles = 8*["-"])
+
+                        
+                        
+                        # Get the mean and std of noise per CBC
+                        pede_hb0_per_cbc_mean_std_list = self.__get_mean_std_per_cbc(pede_hb0_dict)
+                        pede_hb1_per_cbc_mean_std_list = self.__get_mean_std_per_cbc(pede_hb1_dict)
+                        
+                        self.plot_group(x           = np.arange(8),
+                                        data_list   = [[pede_hb0_per_cbc_mean_std_list,
+                                                        pede_hb1_per_cbc_mean_std_list]],
+                                        legends     = [["hybrid 0",
+                                                        "hybrid 1"]],
+                                        title       = f"Pedestal_{martaTemp}_{moduleID}",
+                                        name        = f"Plot_PedestalCBC_bothHybrids_bothSensors_{martaTemp}_{moduleID}_{datakey}",
+                                        xticklabels = [f"CBC_{i}" for i in range(8)],
+                                        ylim        = [595, 605],
+                                        ylabel      = "Pedestal [VcTh]",
+                                        outdir      = _outdirCBC,
+                                        marker      = "o",
+                                        markersize  = 2.5,
+                                        capsize     = 1.5,
+                                        elinewidth  = 1.0)
+                        
+                        
                         
                 # Loop over temp ends here
             # Loop over modules end here
@@ -1190,7 +1275,6 @@ class Plotter:
         # Loop over setup ends here    
 
 
-
         # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
         #                                          Comparing two setup                                               #
         # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
@@ -1207,15 +1291,23 @@ class Plotter:
             #                                     WARNING: FEW THIGS ARE HARDCODED                                         #
             #                        Here, one can use hardcoding to compare different setup                               #
             # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
-            
             if self.testinfo.get("check_sensor_temperature") == True:        
                 # ===>> Sensor temperature
                 sensor_temps_setup_1 = np.array(sensor_temps_setup[setup_1]['RoomTemp'])
                 sensor_temps_setup_2 = np.array(sensor_temps_setup[setup_2]['RoomTemp'])
+                #from IPython import embed; embed(); exit()
+                tick_offset = 0.1
+                box_offset = 0.1
+                if self.testinfo.get("are_same_modules") == False:
+                    moduleIDs = np.array(allModuleIDs).reshape(2,-1).T.tolist()
+                    moduleIDs = [f"{mid[0]}\n{mid[1]}" for mid in moduleIDs]
+                    tick_offset = 0.22
+                    box_offset = 0.52
+                
                 self.plot_basic(x          = np.arange(len(moduleIDs)),
-                                data_list  = [np.concatenate((sensor_temps_setup_2[:,None], np.zeros_like(sensor_temps_setup_2)[:,None]), axis=1),
-                                              np.concatenate((sensor_temps_setup_1[:,None], np.zeros_like(sensor_temps_setup_1)[:,None]), axis=1)],
-                                legends    = [f"{setup_2}", f"{setup_1}"],
+                                data_list  = [np.concatenate((sensor_temps_setup_1[:,None], np.zeros_like(sensor_temps_setup_1)[:,None]), axis=1).tolist(),
+                                              np.concatenate((sensor_temps_setup_2[:,None], np.zeros_like(sensor_temps_setup_2)[:,None]), axis=1).tolist()],
+                                legends    = [f"{setup_1}", f"{setup_2}"],
                                 title      = f"Sensor Temperature (RoomTemp)",
                                 name       = f"Plot_SensorTemp_allModules_RoomTemp_compare",
                                 xticklabels= moduleIDs,
@@ -1224,7 +1316,8 @@ class Plotter:
                                 linewidth  = 1.5,
                                 markersize = 4.5,
                                 ylim       = [18.0,29.0],
-                                outdir     = self.outdir)
+                                outdir     = self.outdir,
+                                tick_offset = tick_offset)
             else:
                 logger.warning("skip comparing sensor temperature")
 
@@ -1233,20 +1326,23 @@ class Plotter:
             strip_noise_hb0_setup_1 = strip_noise_hb0_setup[setup_1]['RoomTemp']
             strip_noise_hb0_setup_2 = strip_noise_hb0_setup[setup_2]['RoomTemp']
             # box plot
-            self.plot_box(data_list_1 = strip_noise_hb0_setup_2,
-                          data_list_2 = strip_noise_hb0_setup_1,
-                          legends     = [f"{setup_2}", f"{setup_1}"],
+            self.plot_box(data_list_1 = strip_noise_hb0_setup_1,
+                          data_list_2 = strip_noise_hb0_setup_2,
+                          legends     = [f"{setup_1}", f"{setup_2}"],
                           title       = f"StripNoise_hybrid0_RoomTemp",
                           name        = f"Plot_StripNoiseBox_allModules_Hybrid0_RoomTemp_compare",
                           xticklabels = moduleIDs,
                           ylabel      = "Noise [VcTh]",
-                          outdir      = self.outdir)
+                          offset      =	box_offset,
+                          outdir      = self.outdir,
+                          box_offset  = box_offset)
             # group plot
             strip_noise_hb0_setup_1_mean_std = self.__get_noise_mean_sigma_for_plotting(np.array(strip_noise_hb0_setup_1)[:,:,0])
             strip_noise_hb0_setup_2_mean_std = self.__get_noise_mean_sigma_for_plotting(np.array(strip_noise_hb0_setup_2)[:,:,0])
             self.plot_group(x           = np.arange(len(moduleIDs)),
-                            data_list   = [[strip_noise_hb0_setup_2_mean_std, strip_noise_hb0_setup_1_mean_std]],
-                            legends     = [[f"{setup_2}", f"{setup_1}"]],
+                            data_list   = [[strip_noise_hb0_setup_1_mean_std,
+                                            strip_noise_hb0_setup_2_mean_std]],
+                            legends     = [[f"{setup_1}", f"{setup_2}"]],
                             title       = f"StripNoise_hb0 (RoomTemp)",
                             name        = f"Plot_StripNoise_allModules_hybrid0_RoomTemp_compare",
                             xticklabels = moduleIDs,
@@ -1257,27 +1353,31 @@ class Plotter:
                             markerfacecolor=None,
                             markersize  = 5.5,
                             capsize     = 1.5,
-                            elinewidth  = 1.0)
+                            elinewidth  = 1.0,
+                            tick_offset = tick_offset)
 
 
             # ===>> strip noise hybrid 1
             # box plot
             strip_noise_hb1_setup_1 = strip_noise_hb1_setup[setup_1]['RoomTemp']
             strip_noise_hb1_setup_2 = strip_noise_hb1_setup[setup_2]['RoomTemp']
-            self.plot_box(data_list_1 = strip_noise_hb1_setup_2,
-                          data_list_2 = strip_noise_hb1_setup_1,
-                          legends     = [f"{setup_2}", f"{setup_1}"],
+            self.plot_box(data_list_1 = strip_noise_hb1_setup_1,
+                          data_list_2 = strip_noise_hb1_setup_2,
+                          legends     = [f"{setup_1}", f"{setup_2}"],
                           title       = f"StripNoise_hybrid1_RoomTemp",
                           name        = f"Plot_StripNoiseBox_allModules_Hybrid1_RoomTemp_compare",
                           xticklabels = moduleIDs,
                           ylabel      = "Noise [VcTh]",
-                          outdir      = self.outdir)
+                          offset      =	box_offset,
+                          outdir      = self.outdir,
+                          box_offset  = box_offset)
             # group plot
             strip_noise_hb1_setup_1_mean_std = self.__get_noise_mean_sigma_for_plotting(np.array(strip_noise_hb1_setup_1)[:,:,0])
             strip_noise_hb1_setup_2_mean_std = self.__get_noise_mean_sigma_for_plotting(np.array(strip_noise_hb1_setup_2)[:,:,0])
             self.plot_group(x           = np.arange(len(moduleIDs)),
-                            data_list   = [[strip_noise_hb1_setup_2_mean_std, strip_noise_hb1_setup_1_mean_std]],
-                            legends     = [[f"{setup_2}", f"{setup_1}"]],
+                            data_list   = [[strip_noise_hb1_setup_1_mean_std,
+                                            strip_noise_hb1_setup_2_mean_std]],
+                            legends     = [[f"{setup_1}", f"{setup_2}"]],
                             title       = f"StripNoise_hb1 (RoomTemp)",
                             name        = f"Plot_StripNoise_allModules_hybrid1_RoomTemp_compare",
                             xticklabels = moduleIDs,
@@ -1288,27 +1388,31 @@ class Plotter:
                             markerfacecolor=None,
                             markersize  = 5.5,
                             capsize     = 1.5,
-                            elinewidth  = 1.0)
+                            elinewidth  = 1.0,
+                            tick_offset = tick_offset)
             
             
             # ===>> strip noise hybrid 0 (bottom)
             # box plot
             strip_noise_hb0_bot_setup_1 = strip_noise_hb0_bot_setup[setup_1]['RoomTemp']
             strip_noise_hb0_bot_setup_2 = strip_noise_hb0_bot_setup[setup_2]['RoomTemp']
-            self.plot_box(data_list_1 = strip_noise_hb0_bot_setup_2,
-                          data_list_2 = strip_noise_hb0_bot_setup_1,
-                          legends     = [f"{setup_2}", f"{setup_1}"],
+            self.plot_box(data_list_1 = strip_noise_hb0_bot_setup_1,
+                          data_list_2 = strip_noise_hb0_bot_setup_2,
+                          legends     = [f"{setup_1}", f"{setup_2}"],
                           title       = f"StripNoise_hybrid0_bottom_RoomTemp",
                           name        = f"Plot_StripNoiseBox_allModules_Hybrid0_bottomSensor_RoomTemp_compare",
                           xticklabels = moduleIDs,
                           ylabel      = "Noise [VcTh]",
-                          outdir      = self.outdir)
+                          offset      =	box_offset,
+                          outdir      = self.outdir,
+                          box_offset  = box_offset)
             # group plot
             strip_noise_hb0_bot_setup_1_mean_std = self.__get_noise_mean_sigma_for_plotting(np.array(strip_noise_hb0_bot_setup_1)[:,:,0])
             strip_noise_hb0_bot_setup_2_mean_std = self.__get_noise_mean_sigma_for_plotting(np.array(strip_noise_hb0_bot_setup_2)[:,:,0])
             self.plot_group(x           = np.arange(len(moduleIDs)),
-                            data_list   = [[strip_noise_hb0_bot_setup_2_mean_std, strip_noise_hb0_bot_setup_1_mean_std]],
-                            legends     = [[f"{setup_2}", f"{setup_1}"]],
+                            data_list   = [[strip_noise_hb0_bot_setup_1_mean_std,
+                                            strip_noise_hb0_bot_setup_2_mean_std]],
+                            legends     = [[f"{setup_1}", f"{setup_2}"]],
                             title       = f"StripNoise_hb0_bottom (RoomTemp)",
                             name        = f"Plot_StripNoise_allModules_hybrid0_bottomSensor_RoomTemp_compare",
                             xticklabels = moduleIDs,
@@ -1319,26 +1423,29 @@ class Plotter:
                             markerfacecolor=None,
                             markersize  = 5.5,
                             capsize     = 1.5,
-                            elinewidth  = 1.0)
+                            elinewidth  = 1.0,
+                            tick_offset = tick_offset)
             
             # ===>> strip noise hybrid 1 (bottom)
             # box plot        
             strip_noise_hb1_bot_setup_1 = strip_noise_hb1_bot_setup[setup_1]['RoomTemp']
             strip_noise_hb1_bot_setup_2 = strip_noise_hb1_bot_setup[setup_2]['RoomTemp']
-            self.plot_box(data_list_1 = strip_noise_hb1_bot_setup_2,
-                          data_list_2 = strip_noise_hb1_bot_setup_1,
-                          legends     = [f"{setup_2}", f"{setup_1}"],
+            self.plot_box(data_list_1 = strip_noise_hb1_bot_setup_1,
+                          data_list_2 = strip_noise_hb1_bot_setup_2,
+                          legends     = [f"{setup_1}", f"{setup_2}"],
                           title       = f"StripNoise_hybrid1_bottom_RoomTemp",
                           name        = f"Plot_StripNoiseBox_allModules_Hybrid1_bottomSensor_RoomTemp_compare",
                           xticklabels = moduleIDs,
                           ylabel      = "Noise [VcTh]",
-                          outdir      = self.outdir)
+                          offset      =	box_offset,
+                          outdir      = self.outdir,
+                          box_offset  = box_offset)
             # group plot
             strip_noise_hb1_bot_setup_1_mean_std = self.__get_noise_mean_sigma_for_plotting(np.array(strip_noise_hb1_bot_setup_1)[:,:,0])
             strip_noise_hb1_bot_setup_2_mean_std = self.__get_noise_mean_sigma_for_plotting(np.array(strip_noise_hb1_bot_setup_2)[:,:,0])
             self.plot_group(x           = np.arange(len(moduleIDs)),
-                            data_list   = [[strip_noise_hb1_bot_setup_2_mean_std, strip_noise_hb1_bot_setup_1_mean_std]],
-                            legends     = [[f"{setup_2}", f"{setup_1}"]],
+                            data_list   = [[strip_noise_hb1_bot_setup_1_mean_std, strip_noise_hb1_bot_setup_2_mean_std]],
+                            legends     = [[f"{setup_1}", f"{setup_2}"]],
                             title       = f"StripNoise_hb1_bottom (RoomTemp)",
                             name        = f"Plot_StripNoise_allModules_hybrid1_bottomSensor_RoomTemp_compare",
                             xticklabels = moduleIDs,
@@ -1349,27 +1456,30 @@ class Plotter:
                             markerfacecolor=None,
                             markersize  = 5.5,
                             capsize     = 1.5,
-                            elinewidth  = 1.0)
+                            elinewidth  = 1.0,
+                            tick_offset = tick_offset)
 
 
             # ===>> strip noise hybrid 0 (top)
             # box plot
             strip_noise_hb0_top_setup_1 = strip_noise_hb0_top_setup[setup_1]['RoomTemp']
             strip_noise_hb0_top_setup_2 = strip_noise_hb0_top_setup[setup_2]['RoomTemp']
-            self.plot_box(data_list_1 = strip_noise_hb0_top_setup_2,
-                          data_list_2 = strip_noise_hb0_top_setup_1,
-                          legends     = [f"{setup_2}", f"{setup_1}"],
+            self.plot_box(data_list_1 = strip_noise_hb0_top_setup_1,
+                          data_list_2 = strip_noise_hb0_top_setup_2,
+                          legends     = [f"{setup_1}", f"{setup_2}"],
                           title       = f"StripNoise_hybrid0_top_RoomTemp",
                           name        = f"Plot_StripNoiseBox_allModules_Hybrid0_topSensor_RoomTemp_compare",
                           xticklabels = moduleIDs,
                           ylabel      = "Noise [VcTh]",
-                          outdir      = self.outdir)
+                          offset      =	box_offset,
+                          outdir      = self.outdir,
+                          box_offset  = box_offset)
             # group plot
             strip_noise_hb0_top_setup_1_mean_std = self.__get_noise_mean_sigma_for_plotting(np.array(strip_noise_hb0_top_setup_1)[:,:,0])
             strip_noise_hb0_top_setup_2_mean_std = self.__get_noise_mean_sigma_for_plotting(np.array(strip_noise_hb0_top_setup_2)[:,:,0])
             self.plot_group(x           = np.arange(len(moduleIDs)),
-                            data_list   = [[strip_noise_hb0_top_setup_2_mean_std, strip_noise_hb0_top_setup_1_mean_std]],
-                            legends     = [[f"{setup_2}", f"{setup_1}"]],
+                            data_list   = [[strip_noise_hb0_top_setup_1_mean_std, strip_noise_hb0_top_setup_2_mean_std]],
+                            legends     = [[f"{setup_1}", f"{setup_2}"]],
                             title       = f"StripNoise_hb0_top (RoomTemp)",
                             name        = f"Plot_StripNoise_allModules_hybrid0_topSensor_RoomTemp_compare",
                             xticklabels = moduleIDs,
@@ -1380,27 +1490,31 @@ class Plotter:
                             markerfacecolor=None,
                             markersize  = 5.5,
                             capsize     = 1.5,
-                            elinewidth  = 1.0)
+                            elinewidth  = 1.0,
+                            tick_offset = tick_offset)
             
         
             # ===>> strip noise hybrid 1 (top)
             # box plot
             strip_noise_hb1_top_setup_1 = strip_noise_hb1_top_setup[setup_1]['RoomTemp']
             strip_noise_hb1_top_setup_2 = strip_noise_hb1_top_setup[setup_2]['RoomTemp']
-            self.plot_box(data_list_1 = strip_noise_hb1_top_setup_2,
-                          data_list_2 = strip_noise_hb1_top_setup_1,
-                          legends     = [f"{setup_2}", f"{setup_1}"],
+            self.plot_box(data_list_1 = strip_noise_hb1_top_setup_1,
+                          data_list_2 = strip_noise_hb1_top_setup_2,
+                          legends     = [f"{setup_1}", f"{setup_2}"],
                           title       = f"StripNoise_hybrid1_top_RoomTemp",
                           name        = f"Plot_StripNoiseBox_allModules_Hybrid1_topSensor_RoomTemp_compare",
                           xticklabels = moduleIDs,
                           ylabel      = "Noise [VcTh]",
-                          outdir      = self.outdir)
+                          offset      = box_offset,
+                          outdir      = self.outdir,
+                          box_offset  = box_offset)
             # group plot
             strip_noise_hb1_top_setup_1_mean_std = self.__get_noise_mean_sigma_for_plotting(np.array(strip_noise_hb1_top_setup_1)[:,:,0])
             strip_noise_hb1_top_setup_2_mean_std = self.__get_noise_mean_sigma_for_plotting(np.array(strip_noise_hb1_top_setup_2)[:,:,0])
             self.plot_group(x           = np.arange(len(moduleIDs)),
-                            data_list   = [[strip_noise_hb1_top_setup_2_mean_std, strip_noise_hb1_top_setup_1_mean_std]],
-                            legends     = [[f"{setup_2}", f"{setup_1}"]],
+                            data_list   = [[strip_noise_hb1_top_setup_1_mean_std,
+                                            strip_noise_hb1_top_setup_2_mean_std]],
+                            legends     = [[f"{setup_1}", f"{setup_2}"]],
                             title       = f"StripNoise_hb1_top (RoomTemp)",
                             name        = f"Plot_StripNoise_allModules_hybrid1_topSensor_RoomTemp_compare",
                             xticklabels = moduleIDs,
@@ -1411,7 +1525,8 @@ class Plotter:
                             markerfacecolor=None,
                             markersize  = 5.5,
                             capsize     = 1.5,
-                            elinewidth  = 1.0)
+                            elinewidth  = 1.0,
+                            tick_offset = tick_offset)
 
         
             # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
@@ -1431,7 +1546,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [1200.0,2200.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset= tick_offset)
                 self.plot_basic(x          = np.arange(len(moduleIDs)),
                                 data_list  = [cmn_noise_setup_1_sigma_std, cmn_noise_setup_2_sigma_std],
                                 legends    = [f"{setup_1}", f"{setup_2}"],
@@ -1442,7 +1558,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [50.0,250.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset=tick_offset)
                 # ===>> Extract CMN
                 CMN_setup_1 = self.__extractCMN(nchannels = np.array(common_noise_setup[setup_1]['RoomTemp']).shape[1],
                                                 mean = cmn_noise_setup_1_mean_std[:,0],
@@ -1460,7 +1577,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [0.0,20.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset= tick_offset)
             
 
                 # ===>>> nHits top and bottom
@@ -1481,7 +1599,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [500.0,1200.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset= tick_offset)
                 self.plot_basic(x          = np.arange(len(moduleIDs)),
                                 data_list  = [cmn_noise_bot_setup_1_sigma_std, cmn_noise_bot_setup_2_sigma_std,
                                               cmn_noise_top_setup_1_sigma_std, cmn_noise_top_setup_2_sigma_std],
@@ -1494,7 +1613,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [0.0,200.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset= tick_offset)
                 # ===>> Extract CMN
                 CMN_bot_setup_1 = self.__extractCMN(nchannels = np.array(common_noise_bot_setup[setup_1]['RoomTemp']).shape[1],
                                                     mean = cmn_noise_bot_setup_1_mean_std[:,0],
@@ -1520,7 +1640,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [0.0,40.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset= tick_offset)
                 
 
                 # nHits both hybrids
@@ -1541,7 +1662,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [500.0,1200.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset= tick_offset)
                 self.plot_basic(x          = np.arange(len(moduleIDs)),
                                 data_list  = [cmn_noise_hb0_setup_1_sigma_std, cmn_noise_hb0_setup_2_sigma_std,
                                               cmn_noise_hb1_setup_1_sigma_std, cmn_noise_hb1_setup_2_sigma_std],
@@ -1554,7 +1676,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [50.0,300.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset= tick_offset)
                 
                 CMN_hb0_setup_1 = self.__extractCMN(nchannels = np.array(common_noise_hb0_setup[setup_1]['RoomTemp']).shape[1],
                                                     mean = cmn_noise_hb0_setup_1_mean_std[:,0],
@@ -1580,7 +1703,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [0.0,40.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset= tick_offset)
                 
                 
                 
@@ -1610,7 +1734,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [200.0,600.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset= tick_offset)
                 self.plot_basic(x          = np.arange(len(moduleIDs)),
                                 data_list  = [cmn_noise_hb0_bot_setup_1_sigma_std, cmn_noise_hb0_bot_setup_2_sigma_std,
                                               cmn_noise_hb1_bot_setup_1_sigma_std, cmn_noise_hb1_bot_setup_2_sigma_std],
@@ -1623,7 +1748,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [10.0,160.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset=tick_offset)
             
                 CMN_hb0_bot_setup_1 = self.__extractCMN(nchannels = np.array(common_noise_hb0_bot_setup[setup_1]['RoomTemp']).shape[1],
                                                         mean = cmn_noise_hb0_bot_setup_1_mean_std[:,0],
@@ -1649,7 +1775,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [0.0,40.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset= tick_offset)
                 
                 cmn_noise_hb0_top_setup_1_mean_std, cmn_noise_hb0_top_setup_1_sigma_std = self.__get_cmn_mean_sigma_for_plotting(
                     np.array(common_noise_hb0_top_setup[setup_1]['RoomTemp'])[:,:,0]
@@ -1677,7 +1804,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [200.0,600.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset = tick_offset)
                 self.plot_basic(x          = np.arange(len(moduleIDs)),
                                 data_list  = [cmn_noise_hb0_top_setup_1_sigma_std, cmn_noise_hb0_top_setup_2_sigma_std,
                                               cmn_noise_hb1_top_setup_1_sigma_std, cmn_noise_hb1_top_setup_2_sigma_std],
@@ -1690,7 +1818,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [10.0,160.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset = tick_offset)
                 
                 CMN_hb0_top_setup_1 = self.__extractCMN(nchannels = np.array(common_noise_hb0_top_setup[setup_1]['RoomTemp']).shape[1],
                                                         mean = cmn_noise_hb0_top_setup_1_mean_std[:,0],
@@ -1716,7 +1845,8 @@ class Plotter:
                                 markersize = 10,
                                 ylim       = [0.0,40.0],
                                 outdir     = self.outdir,
-                                fit        = False)
+                                fit        = False,
+                                tick_offset= tick_offset)
             else:
                 logger.warning(f"skip comparing common mode noise between {setup_1} and {setup_2}")
 

@@ -24,8 +24,7 @@ class Fitter:
 
         if self.modeltype == "poly2":
             self.model = self.__gauss_model
-        else:
-            logger.warning("No fitmodeltype, default is pure gaussian")
+        elif self.modeltype == "pure_gauss":
             self.model = self.__gauss_model
             self.params = {
                 "amp": self.fitparams.get("amp", 0.1),
@@ -34,7 +33,8 @@ class Fitter:
             }
             self.params_range = [(0.1, 500.1), (300, 3000), (10.0, 255.0)]
             self.result = self.__fit()
-                    
+        else:
+            raise RuntimeError("Wrong model defined for fitting")
 
     def __optimise(self):
         lsq = LeastSquares(self.x, self.y, self.yerr, self.model)

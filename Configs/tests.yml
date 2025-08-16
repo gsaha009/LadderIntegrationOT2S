@@ -2,6 +2,9 @@
 # --- Used by the Dataloader & Plotter --- #
 # ---------------------------------------- #
 
+# check pedestal or not?
+check_pedestal : yes
+
 # must be switched off for quick test results
 # optional for full test results or for results from db (always full test)
 check_common_noise : yes
@@ -17,3 +20,6 @@ check_sensor_temperature: yes
 
 # comparing different setup
 compare_two_setup: yes
+
+# a flag to make sure if two same set of modules or different set of modules need to be compared
+are_same_modules: no

@@ -83,6 +83,11 @@ def main():
         if not config:
             raise RuntimeError("Must provide a yaml config for data loader")
         outdir_base = config.get("output", f"../Output/OutputDefault")
+        if os.path.exists(outdir_base):
+            logger.warning(f"{outdir_base} found")
+        else:
+            os.mkdir(outdir_base)
+        
         outdir_name = f"{dttag}" if args.tag == "" else f"{args.tag}"
         outdir = f"{outdir_base}/{outdir_name}"
         if os.path.exists(outdir):
@@ -91,15 +96,16 @@ def main():
             os.mkdir(outdir)
 
         dataobj = DataLoader(config_1, config, target=outdir)
-        noise_data_dict = dataobj.getNoiseData()
-        data[main_key] = noise_data_dict
+        data_dict = dataobj.getData()
+        data[main_key] = data_dict
 
     if args.dump:
         with open(f'{outdir}/data.yaml', 'w') as file:
             yaml.dump(data, file, sort_keys=False, default_flow_style=False)
     logger.info("Data loading done ...")
 
-
+    #from IPython import embed; embed(); exit()
+    
     outdir = f"{outdir}/Plots"
     if not os.path.exists(outdir):
         logger.info(f"creating plot dir : {outdir}")
