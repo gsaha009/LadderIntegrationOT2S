@@ -53,57 +53,54 @@ pede_hname_chip_level:
  - ChannelPedestalDistribution
 
 
-
-
-
 files:
   2S_18_6_KIT-10019:
     Run1:
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10019.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10019.root
+      tfile_main: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10019.root
+      tfile_dqm: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10019.root
   2S_18_6_KIT-10018:
     Run1:
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10018.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10018.root
+      tfile_main: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10018.root
+      tfile_dqm: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10018.root
   2S_18_6_KIT-10017:
     Run1:
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10017.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10017.root
+      tfile_main: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10017.root
+      tfile_dqm: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10017.root
   2S_18_6_KIT-10009:
     Run1:
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10009.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10009.root
+      tfile_main: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10009.root
+      tfile_dqm: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10009.root
   2S_18_6_KIT-10013:
     Run1:
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10013.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10013.root
+      tfile_main: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10013.root
+      tfile_dqm: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10013.root
   2S_18_6_KIT-10015:
     Run1:
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10015.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10015.root
+      tfile_main: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10015.root
+      tfile_dqm: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10015.root
   2S_18_6_KIT-10011:
     Run1:
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10011.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10011.root
+      tfile_main: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10011.root
+      tfile_dqm: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10011.root
   2S_18_6_KIT-10010:
     Run1:
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10010.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10010.root
+      tfile_main: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10010.root
+      tfile_dqm: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10010.root
   2S_18_6_KIT-10008:
     Run1:
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10008.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10008.root
+      tfile_main: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10008.root
+      tfile_dqm: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10008.root
   2S_18_6_KIT-10007:
     Run1:
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10007.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10007.root
+      tfile_main: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10007.root
+      tfile_dqm: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10007.root
   2S_18_6_KIT-10020:
     Run1:
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10020.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10020.root
+      tfile_main: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10020.root
+      tfile_dqm: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10020.root
   2S_18_6_KIT-10016:
     Run1:
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10016.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10016.root
+      tfile_main: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10016.root
+      tfile_dqm: /eos/project/i/iphctau/public/gsaha/Ph2ACF_Results_LadderIntegration/Results_QuickTests_KIT_May15/Ref_KIT_QuickTests/Ref_2S_18_6_KIT-10016.root
 
-output: /Users/gsaha/Work/IPHC/TrackerUpgrade/Output
+output: /eos/project/i/iphctau/public/gsaha/Output_LadderIntegration

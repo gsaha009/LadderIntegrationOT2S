@@ -22,4 +22,4 @@ check_sensor_temperature: yes
 compare_two_setup: yes
 
 # a flag to make sure if two same set of modules or different set of modules need to be compared
-are_same_modules: no
+are_same_modules: yes
