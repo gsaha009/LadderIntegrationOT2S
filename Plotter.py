@@ -209,7 +209,7 @@ class Plotter:
         #print(f"Final number of xticks: {len(ax.get_xticks())}")
         plt.tight_layout()
         fig.savefig(f"{outdir}/{name}.pdf", dpi=300)
-        fig.savefig(f"{outdir}/{name}.png", dpi=250)
+        #fig.savefig(f"{outdir}/{name}.png", dpi=250)
         plt.close()
 
 
@@ -290,7 +290,7 @@ class Plotter:
 
         plt.tight_layout()
         fig.savefig(f"{outdir}/{name}.pdf", dpi=300)
-        fig.savefig(f"{outdir}/{name}.png", dpi=250)
+        #fig.savefig(f"{outdir}/{name}.png", dpi=250)
         plt.close()
 
         
@@ -373,7 +373,7 @@ class Plotter:
         ax.set_title(f"{title}", fontsize=14, loc='right')
         plt.tight_layout()
         fig.savefig(f"{outdir}/{name}.pdf", dpi=300)
-        fig.savefig(f"{outdir}/{name}.png", dpi=250)
+        #fig.savefig(f"{outdir}/{name}.png", dpi=250)
         plt.close()
 
 
@@ -425,7 +425,7 @@ class Plotter:
         
         plt.tight_layout()
         fig.savefig(f"{outdir}/{name}.pdf", dpi=300)
-        fig.savefig(f"{outdir}/{name}.png", dpi=250)
+        #fig.savefig(f"{outdir}/{name}.png", dpi=250)
         plt.close()
 
 
