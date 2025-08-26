@@ -25,6 +25,8 @@ Generate quick, insightful plots from **Ph2_ACF** quick/full test results for **
 
 
 Install requirements:
+
+if `cvmfs` is not accessible, a bit longer process to be followed
 ```bash
 # conda installation
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -33,7 +35,18 @@ bash Miniconda3-latest-Linux-x86_64.sh
 # use the `yml` and build the environment
 conda env create -f environment.yml
 
-# Set up the plotter
+# and, then clone the repo
+```
+But, if `cvmfs` is there, then life would be easier
+```bash
+# first clone the repo
+git clone https://github.com/gsaha009/LadderIntegrationOT2S.git
+source setup.sh
+# and everything will be ready
+```
+
+Againb, to clone the repository:
+```bash
 git clone https://github.com/gsaha009/LadderIntegrationOT2S.git
 ```
 
