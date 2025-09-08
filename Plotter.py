@@ -6,16 +6,13 @@ import os
 import sys
 import yaml
 import numpy as np
-import pandas as pd
 
-#from util import plot_basic, hist_basic
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 import mplhep as hep
 hep.style.use("CMS")
-import seaborn as sns
 
 from Fitter import Fitter
 
@@ -58,32 +55,128 @@ class Plotter:
     
     def _get_mean_std_for_cmn_per_module(self, arr):
         x = np.arange(arr.shape[-1])
-        #from IPython import embed; embed(); exit()
         arr = arr.tolist()
         outlist = []
         for item in arr:
-            #print(len(item))
-            #print(x.shape)
             _arr = np.array(item)
-            #print(arr.shape)
-            #mean = np.average(x, weights=_arr, axis=0)
-            #sigma = np.sqrt(np.average((x - mean)**2, weights=_arr, axis=0))
             mean_sigma = self.__get_mean_std_for_cmn(x, _arr)
-            #print(mean, sigma)
             mean = mean_sigma[0]
             sigma = mean_sigma[1]
             outlist.append([float(mean), float(sigma)])
-        #x = np.repeat(x[None,:], arr.shape[0], axis=0)
-        #mean_sigma = self.__get_mean_std_for_cmn(x, arr, axis=1)
-        #return (mean_sigma[0], mean_sigma[1])
-        #from IPython import embed; embed(); exit()
+
         return np.array(outlist)
 
-    def __extractCMN(self, nchannels=None, mean=None, std=None):
+    
+    def	__extractCMN_iphc(self, nchannels=None, mean=None, std=None):
+        """
+        Ref: https://indico.cern.ch/event/1465528/contributions/6170035/attachments/2949439/5184080/systemtest_1710_JT.pdf
+        """
         alpha = 2*np.pi*(std**2-mean*(1-mean/nchannels))/(nchannels*(nchannels-1))
-        cmn = np.sqrt(np.sin(alpha)/(1-np.sin(alpha)))*100
-        return np.concatenate((cmn[:,None], np.zeros_like(cmn)[:,None]), axis=1)
+        cmn = np.sqrt(np.sin(alpha)/(1-np.sin(alpha)))
+        return cmn
         
+    def __extractCMN_giovanni(self, nchannels=None, mean=None, std=None):
+        """
+        Ref: CMNoiseFraction ( Giovanni's Note )
+        """
+        cmn = np.sqrt((1/(nchannels - 1)) * (std**2/(mean*(1 - (mean/nchannels))) - 1))
+        return cmn
+    
+    def __extractCMN(self, nchannels=None, mean=None, std=None):
+        cmn = self.__extractCMN_iphc(nchannels=nchannels, mean=mean, std=std)*100
+        return np.concatenate((cmn[:,None], np.zeros_like(cmn)[:,None]), axis=1)
+
+    def __extractCMN_crude(self, nchannels=None, mean=None, std=None):
+        std_expected = np.sqrt(mean)/2.0
+        cmn = (std - std_expected)/std
+        return cmn
+
+    def __extractCMN_potato(self, hitsarr):
+        val = np.array(hitsarr)[:,0]
+        nch = float(val.shape[0])
+        ch  = np.arange(nch)
+        mask = ((ch < int(nch*0.2)) | (ch > int(nch*0.8)))
+        val_pass = val[mask]
+        cmn_frac = float(np.sum(val_pass)/np.sum(val))
+        return cmn_frac
+
+    
+    def __mask_cmn_frac(self, cmn):
+        cmn = np.abs(np.array(cmn))
+        cmn_min = np.min(cmn, axis=1)
+        #cmn_min = np.broadcast()
+        pass
+        
+    
+    def plot_heatmap(self,
+                     data = None,
+                     title = "Default",
+                     name = "Default",
+                     **kwargs):
+
+        data = np.abs(np.array(data)).T
+
+        #from IPython import embed; embed(); exit() 
+        basics = self.__basic_settings()
+
+        xticklabels = kwargs.get("xticklabels", None)
+        colmap = kwargs.get("colmap", "viridis")
+        outdir = kwargs.get("outdir", "../Output")
+        vmin = kwargs.get("vmin", None)
+        vmax = kwargs.get("vmax", None)
+        cbar_label = kwargs.get("cb_label", "CMNoise fraction")
+        
+        fig, ax = plt.subplots(figsize=basics["size"])
+        hep.cms.text(basics["heplogo"], loc=basics["logoloc"]) # CMS
+
+        if vmin is None:
+            vmin = float(np.min(data))
+                
+        threshold = np.percentile(data, 95)
+        masked_data = np.ma.masked_greater(data, threshold)
+
+        cmap=plt.cm.get_cmap(colmap).copy()
+        cmap.set_bad(color="#800000") 
+        
+        #vmax = float(np.percentile(data, 95))
+        if vmax is None:
+            vmax=threshold
+        im = ax.imshow(masked_data, cmap=cmap, aspect="auto", origin="lower", vmin=vmin, vmax=vmax)
+
+        cbar = plt.colorbar(im, ax=ax)
+        cbar.set_label(cbar_label, fontsize=12)
+        cbar.ax.tick_params(labelsize=12)
+
+        ax.set_xticks(np.arange(data.shape[1]))
+        ax.set_yticks(np.arange(data.shape[0]))
+        ax.set_xticklabels(xticklabels)
+        ax.set_yticklabels([f'CBC_{i}' for i in range(8)])
+
+        plt.setp(ax.get_xticklabels(), rotation=90, ha="right", rotation_mode="anchor")
+
+        # Annotate each cell with the value
+        for i in range(data.shape[0]):
+            for j in range(data.shape[1]):
+                if data[i, j] <= threshold:
+                    ax.text(
+                        j, i, f"{data[i, j]:.2f}",  # format with 2 decimals
+                        ha="center", va="center",
+                        color="white" if data[i, j] < (threshold/2) else "black",
+                        fontsize=10
+                    )
+                else:
+                    ax.text(
+                        j, i, f"{data[i, j]:.2f}",
+                        ha="center", va="center",
+                        color="white", fontsize=9, fontweight="bold"  # highlight outlier text
+                    )
+        ax.set_title(f"{title}", fontsize=14, loc='right')
+        ax.tick_params(direction="in", top=False, right=False, labelsize=13, length=3)
+        plt.tight_layout()
+        fig.savefig(f"{outdir}/{name}.pdf", dpi=300)
+        plt.close()
+
+                
     
     def plot_basic(self,
                    x = None,
@@ -209,7 +302,6 @@ class Plotter:
         #print(f"Final number of xticks: {len(ax.get_xticks())}")
         plt.tight_layout()
         fig.savefig(f"{outdir}/{name}.pdf", dpi=300)
-        #fig.savefig(f"{outdir}/{name}.png", dpi=250)
         plt.close()
 
 
@@ -290,7 +382,6 @@ class Plotter:
 
         plt.tight_layout()
         fig.savefig(f"{outdir}/{name}.pdf", dpi=300)
-        #fig.savefig(f"{outdir}/{name}.png", dpi=250)
         plt.close()
 
         
@@ -373,7 +464,6 @@ class Plotter:
         ax.set_title(f"{title}", fontsize=14, loc='right')
         plt.tight_layout()
         fig.savefig(f"{outdir}/{name}.pdf", dpi=300)
-        #fig.savefig(f"{outdir}/{name}.png", dpi=250)
         plt.close()
 
 
@@ -425,7 +515,6 @@ class Plotter:
         
         plt.tight_layout()
         fig.savefig(f"{outdir}/{name}.pdf", dpi=300)
-        #fig.savefig(f"{outdir}/{name}.png", dpi=250)
         plt.close()
 
 
@@ -496,6 +585,36 @@ class Plotter:
         common_noise_hb1_bot_setup = {}
         common_noise_hb1_top_setup = {}
 
+        common_noise_fit_hb0_cbc_setup = {}
+        common_noise_fit_hb0_cbc_top_sensor_setup = {}
+        common_noise_fit_hb0_cbc_bot_sensor_setup = {}
+
+        common_noise_fit_hb1_cbc_setup = {}
+        common_noise_fit_hb1_cbc_top_sensor_setup = {}
+        common_noise_fit_hb1_cbc_bot_sensor_setup = {}
+
+        common_noise_giovanni_hb0_cbc_setup = {}
+        common_noise_giovanni_hb0_cbc_top_sensor_setup = {}
+        common_noise_giovanni_hb0_cbc_bot_sensor_setup = {}
+
+        common_noise_giovanni_hb1_cbc_setup = {}
+        common_noise_giovanni_hb1_cbc_top_sensor_setup = {}
+        common_noise_giovanni_hb1_cbc_bot_sensor_setup = {}
+        
+        common_noise_iphc_hb0_cbc_setup = {}
+        common_noise_iphc_hb0_cbc_top_sensor_setup = {}
+        common_noise_iphc_hb0_cbc_bot_sensor_setup = {}
+
+        common_noise_iphc_hb1_cbc_setup = {}
+        common_noise_iphc_hb1_cbc_top_sensor_setup = {}
+        common_noise_iphc_hb1_cbc_bot_sensor_setup = {}
+
+        common_noise_crude_hb0_cbc_setup = {}
+        common_noise_crude_hb1_cbc_setup = {}
+
+        common_noise_frac_potato_hb0_cbc_setup = {}
+        common_noise_frac_potato_hb1_cbc_setup = {}        
+        
         allModuleIDs = []
 
         for datakey, dataval in self.data.items():
@@ -535,6 +654,37 @@ class Plotter:
             common_noise_hb1_mod = {}
             common_noise_hb1_bot_mod = {}
             common_noise_hb1_top_mod = {}
+
+            common_noise_fit_hb0_cbc_mod = {}
+            common_noise_fit_hb0_cbc_top_mod = {}
+            common_noise_fit_hb0_cbc_bot_mod = {}
+            
+            common_noise_fit_hb1_cbc_mod = {}
+            common_noise_fit_hb1_cbc_top_mod = {}
+            common_noise_fit_hb1_cbc_bot_mod = {}
+
+
+            common_noise_giovanni_hb0_cbc_mod = {}
+            common_noise_giovanni_hb0_cbc_top_mod = {}
+            common_noise_giovanni_hb0_cbc_bot_mod = {}
+            
+            common_noise_giovanni_hb1_cbc_mod = {}
+            common_noise_giovanni_hb1_cbc_top_mod = {}
+            common_noise_giovanni_hb1_cbc_bot_mod = {}
+
+            common_noise_iphc_hb0_cbc_mod = {}
+            common_noise_iphc_hb0_cbc_top_mod = {}
+            common_noise_iphc_hb0_cbc_bot_mod = {}
+            
+            common_noise_iphc_hb1_cbc_mod = {}
+            common_noise_iphc_hb1_cbc_top_mod = {}
+            common_noise_iphc_hb1_cbc_bot_mod = {}
+
+            common_noise_crude_hb0_cbc_mod = {}
+            common_noise_crude_hb1_cbc_mod = {}
+
+            common_noise_frac_potato_hb0_cbc_mod = {}
+            common_noise_frac_potato_hb1_cbc_mod = {}
             
             # define dict to save info per module level
             moduleIDs = []
@@ -562,6 +712,37 @@ class Plotter:
                         common_noise_hb1_mod[martaTemp] = []
                         common_noise_hb1_bot_mod[martaTemp] = []
                         common_noise_hb1_top_mod[martaTemp] = []
+
+                        common_noise_fit_hb0_cbc_mod[martaTemp] = []
+                        common_noise_fit_hb0_cbc_top_mod[martaTemp] = []
+                        common_noise_fit_hb0_cbc_bot_mod[martaTemp] = []
+                        
+                        common_noise_fit_hb1_cbc_mod[martaTemp] = []
+                        common_noise_fit_hb1_cbc_top_mod[martaTemp] = []
+                        common_noise_fit_hb1_cbc_bot_mod[martaTemp] = []
+
+
+                        common_noise_giovanni_hb0_cbc_mod[martaTemp] = []
+                        common_noise_giovanni_hb0_cbc_top_mod[martaTemp] = []
+                        common_noise_giovanni_hb0_cbc_bot_mod[martaTemp] = []
+                        
+                        common_noise_giovanni_hb1_cbc_mod[martaTemp] = []
+                        common_noise_giovanni_hb1_cbc_top_mod[martaTemp] = []
+                        common_noise_giovanni_hb1_cbc_bot_mod[martaTemp] = []
+
+                        common_noise_iphc_hb0_cbc_mod[martaTemp] = []
+                        common_noise_iphc_hb0_cbc_top_mod[martaTemp] = []
+                        common_noise_iphc_hb0_cbc_bot_mod[martaTemp] = []
+                        
+                        common_noise_iphc_hb1_cbc_mod[martaTemp] = []
+                        common_noise_iphc_hb1_cbc_top_mod[martaTemp] = []
+                        common_noise_iphc_hb1_cbc_bot_mod[martaTemp] = []
+                        
+                        common_noise_crude_hb0_cbc_mod[martaTemp] = []
+                        common_noise_crude_hb1_cbc_mod[martaTemp] = []
+
+                        common_noise_frac_potato_hb0_cbc_mod[martaTemp] = []
+                        common_noise_frac_potato_hb1_cbc_mod[martaTemp] = []
                         
                     noiseDict = _noiseDict["Run1"] # right now, only one run is allowed
 
@@ -1020,6 +1201,73 @@ class Plotter:
                                         markersize  = 2.5,
                                         capsize     = 1.5,
                                         elinewidth  = 1.0)
+
+
+
+                        common_noise_giovanni_hb0_cbc_mod[martaTemp].append(self.__extractCMN_giovanni(nchannels=254,
+                                                                                                       mean=np.array(common_noise_hb0_per_cbc_mean_std_list)[:,0],
+                                                                                                       std=np.array(common_noise_hb0_per_cbc_mean_std_list)[:,1]).tolist())
+                        common_noise_giovanni_hb1_cbc_mod[martaTemp].append(self.__extractCMN_giovanni(nchannels=254,
+                                                                                                       mean=np.array(common_noise_hb1_per_cbc_mean_std_list)[:,0],
+                                                                                                       std=np.array(common_noise_hb1_per_cbc_mean_std_list)[:,1]).tolist())
+
+                        common_noise_iphc_hb0_cbc_mod[martaTemp].append(self.__extractCMN_iphc(nchannels=254,
+                                                                                               mean=np.array(common_noise_hb0_per_cbc_mean_std_list)[:,0],
+                                                                                               std=np.array(common_noise_hb0_per_cbc_mean_std_list)[:,1]).tolist())
+                        common_noise_iphc_hb1_cbc_mod[martaTemp].append(self.__extractCMN_iphc(nchannels=254,
+                                                                                               mean=np.array(common_noise_hb1_per_cbc_mean_std_list)[:,0],
+                                                                                               std=np.array(common_noise_hb1_per_cbc_mean_std_list)[:,1]).tolist())
+
+                        common_noise_crude_hb0_cbc_mod[martaTemp].append(self.__extractCMN_crude(nchannels=254,
+                                                                                                 mean=np.array(common_noise_hb0_per_cbc_mean_std_list)[:,0],
+                                                                                                 std=np.array(common_noise_hb0_per_cbc_mean_std_list)[:,1]).tolist())
+                        common_noise_crude_hb1_cbc_mod[martaTemp].append(self.__extractCMN_crude(nchannels=254,
+                                                                                                 mean=np.array(common_noise_hb1_per_cbc_mean_std_list)[:,0],
+                                                                                                 std=np.array(common_noise_hb1_per_cbc_mean_std_list)[:,1]).tolist())
+
+
+
+                        #from IPython import embed; embed(); exit()
+
+
+                        append_fit_result = lambda target, source: target.append(
+                            [
+                                source[f'CBC_{i}_fit_params']['cmnFraction']
+                                for i in range(8)
+                                if f'CBC_{i}_fit_params' in source.keys()
+                            ]
+                        )
+                        # saving the cmn from fit per CBC
+                        #common_noise_fit_hb0_cbc_mod[martaTemp].append([common_noise_hb0_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
+                        append_fit_result(common_noise_fit_hb0_cbc_mod[martaTemp], common_noise_hb0_dict)
+                        append_fit_result(common_noise_fit_hb0_cbc_bot_mod[martaTemp], common_noise_hb0_bot_dict)
+                        append_fit_result(common_noise_fit_hb0_cbc_top_mod[martaTemp], common_noise_hb0_top_dict)
+                        append_fit_result(common_noise_fit_hb1_cbc_mod[martaTemp], common_noise_hb1_dict)
+                        append_fit_result(common_noise_fit_hb1_cbc_bot_mod[martaTemp], common_noise_hb1_bot_dict)
+                        append_fit_result(common_noise_fit_hb1_cbc_top_mod[martaTemp], common_noise_hb1_top_dict)
+                        
+                        append_cmn_potato_result = lambda target, source: target.append(
+                            [
+                                self.__extractCMN_potato(source[f'CBC_{i}'])
+                                for i in range(8)
+                            ]
+                        )
+                        append_cmn_potato_result(common_noise_frac_potato_hb0_cbc_mod[martaTemp], common_noise_hb0_dict)
+                        append_cmn_potato_result(common_noise_frac_potato_hb1_cbc_mod[martaTemp], common_noise_hb1_dict)
+                        
+                        """
+                        common_noise_fit_hb0_cbc_bot_mod[martaTemp].append([common_noise_hb0_bot_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
+                        common_noise_fit_hb0_cbc_bot_mod[martaTemp].append(
+                            [
+                                common_noise_hb0_bot_dict[f'CBC_{i}_fit_params']['cmnFraction']
+                                for i in range(8)
+                                
+                        common_noise_fit_hb0_cbc_top_mod[martaTemp].append([common_noise_hb0_top_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
+                        common_noise_fit_hb1_cbc_mod[martaTemp].append([common_noise_hb1_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
+                        common_noise_fit_hb1_cbc_bot_mod[martaTemp].append([common_noise_hb1_bot_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
+                        common_noise_fit_hb1_cbc_top_mod[martaTemp].append([common_noise_hb1_top_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
+                        """
+                        
                     else:
                         logger.warning("skip plotting common mode noise")
 
@@ -1256,6 +1504,161 @@ class Plotter:
                                     ylim       = [20,160],
                                     outdir     = _outdir,
                                     fit        = False)
+
+
+
+                    common_noise_giovanni_hb0_cbc = common_noise_giovanni_hb0_cbc_mod[temp]
+                    self.plot_heatmap(common_noise_giovanni_hb0_cbc,
+                                      title       = f"CMN-hb0: {temp}",
+                                      name        = f"Plot_CMN_Fraction_Giovanni_hb0_{temp}_{datakey}",
+                                      xticklabels = moduleIDs,
+                                      colmap      = "coolwarm",
+                                      outdir      = _outdirCBC) 
+                    common_noise_giovanni_hb1_cbc = common_noise_giovanni_hb1_cbc_mod[temp]
+                    self.plot_heatmap(common_noise_giovanni_hb1_cbc,
+                                      title       = f"CMN-hb1: {temp}",
+                                      name        = f"Plot_CMN_Fraction_Giovanni_hb1_{temp}_{datakey}",
+                                      xticklabels = moduleIDs,
+                                      colmap      = "coolwarm",
+                                      outdir      = _outdirCBC) 
+
+
+                    common_noise_iphc_hb0_cbc = common_noise_iphc_hb0_cbc_mod[temp]
+                    self.plot_heatmap(common_noise_iphc_hb0_cbc,
+                                      title       = f"CMN-hb0: {temp}",
+                                      name        = f"Plot_CMN_Fraction_Iphc_hb0_{temp}_{datakey}",
+                                      xticklabels = moduleIDs,
+                                      colmap      = "coolwarm",
+                                      outdir      = _outdirCBC) 
+                    common_noise_iphc_hb1_cbc = common_noise_iphc_hb1_cbc_mod[temp]
+                    self.plot_heatmap(common_noise_iphc_hb1_cbc,
+                                      title       = f"CMN-hb1: {temp}",
+                                      name        = f"Plot_CMN_Fraction_Iphc_hb1_{temp}_{datakey}",
+                                      xticklabels = moduleIDs,
+                                      colmap      = "coolwarm",
+                                      outdir      = _outdirCBC) 
+                    
+                    common_noise_potato_hb0_cbc = common_noise_frac_potato_hb0_cbc_mod[temp]
+                    self.plot_heatmap(common_noise_potato_hb0_cbc,
+                                      title       = f"CMN-Potato-hb0: {temp}",
+                                      name        = f"Plot_CMN_Fraction_Potato_hb0_{temp}_{datakey}",
+                                      xticklabels = moduleIDs,
+                                      colmap      = "coolwarm",
+                                      vmin        = 0.0, vmax = 0.5,
+                                      outdir      = _outdirCBC) 
+                    common_noise_potato_hb1_cbc = common_noise_frac_potato_hb1_cbc_mod[temp]
+                    self.plot_heatmap(common_noise_potato_hb1_cbc,
+                                      title       = f"CMN-Potato-hb1: {temp}",
+                                      name        = f"Plot_CMN_Fraction_Potato_hb1_{temp}_{datakey}",
+                                      xticklabels = moduleIDs,
+                                      colmap      = "coolwarm",
+                                      vmin        = 0.0, vmax = 0.5,
+                                      outdir      = _outdirCBC)
+                    
+                    
+                    #from IPython import embed; embed(); exit()
+                    common_noise_fit_hb0_cbc = common_noise_fit_hb0_cbc_mod[temp]
+                    is_empty = all(not x for x in common_noise_fit_hb0_cbc)
+                    if not is_empty:
+                        self.plot_heatmap(common_noise_fit_hb0_cbc,
+                                          title       = f"CMN-hb0: {temp}",
+                                          name        = f"Plot_CMN_Fraction_Ph2ACF_fit_hb0_{temp}_{datakey}",
+                                          xticklabels = moduleIDs,
+                                          colmap      = "coolwarm",
+                                          outdir      = _outdirCBC) 
+                        common_noise_fit_hb0_cbc_top = common_noise_fit_hb0_cbc_top_mod[temp]
+                        self.plot_heatmap(common_noise_fit_hb0_cbc_top,
+                                          title       = f"CMN-hb0-top: {temp}",
+                                          name        = f"Plot_CMN_Fraction_Ph2ACF_fit_hb0_top_{temp}_{datakey}",
+                                          xticklabels = moduleIDs,
+                                          colmap      = "coolwarm",
+                                          outdir      = _outdirCBC)
+                        common_noise_fit_hb0_cbc_bot = common_noise_fit_hb0_cbc_bot_mod[temp]
+                        self.plot_heatmap(common_noise_fit_hb0_cbc_bot,
+                                          title       = f"CMN-hb0-bot: {temp} ",
+                                          name        = f"Plot_CMN_Fraction_Ph2ACF_fit_hb0_bot_{temp}_{datakey}",
+                                          xticklabels = moduleIDs,
+                                          colmap      = "coolwarm",
+                                          outdir      = _outdirCBC)
+
+                        common_noise_fit_hb1_cbc = common_noise_fit_hb1_cbc_mod[temp]
+                        self.plot_heatmap(common_noise_fit_hb1_cbc,
+                                          title       = f"CMN-hb1: {temp}",
+                                          name        = f"Plot_CMN_Fraction_Ph2ACF_fit_hb1_{temp}_{datakey}",
+                                          xticklabels = moduleIDs,
+                                          colmap      = "coolwarm",
+                                          outdir      = _outdirCBC) 
+                        common_noise_fit_hb1_cbc_top = common_noise_fit_hb1_cbc_top_mod[temp]
+                        self.plot_heatmap(common_noise_fit_hb1_cbc_top,
+                                          title       = f"CMN-hb1-top: {temp}",
+                                          name        = f"Plot_CMN_Fraction_Ph2ACF_fit_hb1_top_{temp}_{datakey}",
+                                          xticklabels = moduleIDs,
+                                          colmap      = "coolwarm",
+                                          outdir      = _outdirCBC)
+                        common_noise_fit_hb1_cbc_bot = common_noise_fit_hb1_cbc_bot_mod[temp]
+                        self.plot_heatmap(common_noise_fit_hb1_cbc_bot,
+                                          title       = f"CMN-hb1-bot: {temp}",
+                                          name        = f"Plot_CMN_Fraction_Ph2ACF_fit_hb1_bot_{temp}_{datakey}",
+                                          xticklabels = moduleIDs,
+                                          colmap      = "coolwarm",
+                                          outdir      = _outdirCBC)
+
+
+
+
+                        self.plot_heatmap((np.array(common_noise_giovanni_hb0_cbc)/np.array(common_noise_fit_hb0_cbc)).tolist(),
+                                          title       = f"CMN-hb0-ratio: {temp}",
+                                          name        = f"Plot_CMN_Fraction_Giovanni_by_fit_hb0_{temp}_{datakey}",
+                                          xticklabels = moduleIDs,
+                                          colmap      = "coolwarm",
+                                          vmin        = 0.5, vmax = 1.5,
+                                          cb_label    = "Giovanni_Form/Ph2ACF_Fit",
+                                          outdir      = _outdirCBC) 
+                        self.plot_heatmap((np.array(common_noise_giovanni_hb1_cbc)/np.array(common_noise_fit_hb1_cbc)).tolist(),
+                                          title       = f"CMN-hb1-ratio: {temp}",
+                                          name        = f"Plot_CMN_Fraction_Giovanni_by_fit_hb1_{temp}_{datakey}",
+                                          xticklabels = moduleIDs,
+                                          colmap      = "coolwarm",
+                                          vmin        = 0.5, vmax = 1.5,
+                                          cb_label    = "Giovanni_Form/Ph2ACF_Fit",
+                                          outdir      = _outdirCBC) 
+                        self.plot_heatmap((np.array(common_noise_iphc_hb0_cbc)/np.array(common_noise_fit_hb0_cbc)).tolist(),
+                                          title       = f"CMN-hb0-ratio: {temp}",
+                                          name        = f"Plot_CMN_Fraction_Iphc_by_fit_hb0_{temp}_{datakey}",
+                                          xticklabels = moduleIDs,
+                                          colmap      = "coolwarm",
+                                          vmin        = 0.5, vmax = 1.5,
+                                          cb_label    = "IPHC_Form/Ph2ACF_Fit",
+                                          outdir      = _outdirCBC) 
+                        self.plot_heatmap((np.array(common_noise_iphc_hb1_cbc)/np.array(common_noise_fit_hb1_cbc)).tolist(),
+                                          title       = f"CMN-hb1-ratio: {temp}",
+                                          name        = f"Plot_CMN_Fraction_Iphc_by_fit_hb1_{temp}_{datakey}",
+                                          xticklabels = moduleIDs,
+                                          colmap      = "coolwarm",
+                                          vmin        = 0.5, vmax = 1.5,
+                                          cb_label	  = "IPHC_Form/Ph2ACF_Fit",
+                                          outdir      = _outdirCBC) 
+                        
+                    common_noise_crude_hb0_cbc = common_noise_crude_hb0_cbc_mod[temp]
+                    self.plot_heatmap(common_noise_crude_hb0_cbc,
+                                      title       = f"CMN-hb0: {temp}",
+                                      name        = f"Plot_CMN_Fraction_Crude_hb0_{temp}_{datakey}",
+                                      xticklabels = moduleIDs,
+                                      colmap      = "coolwarm",
+                                      vmin        = 0.5, vmax = +1.0,
+                                      cb_label	  = "(σ - 0.5x√µ)/σ",
+                                      outdir      = _outdirCBC) 
+                    common_noise_crude_hb1_cbc = common_noise_crude_hb1_cbc_mod[temp]
+                    self.plot_heatmap(common_noise_crude_hb1_cbc,
+                                      title       = f"CMN-hb1: {temp}",
+                                      name        = f"Plot_CMN_Fraction_Crude_hb1_{temp}_{datakey}",
+                                      xticklabels = moduleIDs,
+                                      colmap      = "coolwarm",
+                                      vmin        = 0.5, vmax = +1.0,
+                                      cb_label    = "(σ - 0.5x√µ)/σ",
+                                      outdir      = _outdirCBC) 
+
+                    
                 else:
                     logger.warning("skipping module wise common mode noise comparison")
 
@@ -1276,8 +1679,28 @@ class Plotter:
             common_noise_hb1_bot_setup[datakey] = common_noise_hb1_bot_mod
             common_noise_hb1_top_setup[datakey] = common_noise_hb1_top_mod
 
-        # Loop over setup ends here    
+            common_noise_fit_hb0_cbc_setup[datakey] = common_noise_fit_hb0_cbc_mod
+            common_noise_fit_hb0_cbc_top_sensor_setup[datakey] = common_noise_fit_hb0_cbc_top_mod
+            common_noise_fit_hb0_cbc_bot_sensor_setup[datakey] = common_noise_fit_hb0_cbc_bot_mod
+            common_noise_fit_hb1_cbc_setup[datakey] = common_noise_fit_hb1_cbc_mod
+            common_noise_fit_hb1_cbc_top_sensor_setup[datakey] = common_noise_fit_hb1_cbc_top_mod
+            common_noise_fit_hb1_cbc_bot_sensor_setup[datakey] = common_noise_fit_hb1_cbc_bot_mod
 
+            common_noise_giovanni_hb0_cbc_setup[datakey] = common_noise_giovanni_hb0_cbc_mod
+            common_noise_giovanni_hb1_cbc_setup[datakey] = common_noise_giovanni_hb1_cbc_mod
+
+            common_noise_iphc_hb0_cbc_setup[datakey] = common_noise_iphc_hb0_cbc_mod
+            common_noise_iphc_hb1_cbc_setup[datakey] = common_noise_iphc_hb1_cbc_mod
+
+            common_noise_crude_hb0_cbc_setup[datakey] = common_noise_crude_hb0_cbc_mod
+            common_noise_crude_hb1_cbc_setup[datakey] = common_noise_crude_hb1_cbc_mod
+
+            common_noise_frac_potato_hb0_cbc_setup[datakey] = common_noise_frac_potato_hb0_cbc_mod
+            common_noise_frac_potato_hb1_cbc_setup[datakey] = common_noise_frac_potato_hb1_cbc_mod
+            
+            
+        # Loop over setup ends here    
+        #from IPython import embed; embed(); exit()
 
         # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
         #                                          Comparing two setup                                               #
@@ -1851,6 +2274,7 @@ class Plotter:
                                 outdir     = self.outdir,
                                 fit        = False,
                                 tick_offset= tick_offset)
+                
             else:
                 logger.warning(f"skip comparing common mode noise between {setup_1} and {setup_2}")
 

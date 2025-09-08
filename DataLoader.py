@@ -4,7 +4,7 @@ from datetime import datetime
 import numpy as np
 import ROOT
 from glob import glob
-from util import *
+#from util import *
 
 import logging
 logger = logging.getLogger('main')
@@ -148,7 +148,24 @@ class DataLoader:
                     ch_noise_distr_hb_top_cbc_list = self.__get_hist_array(ch_noise_distr_hb_top_cbc)
                     noise_dict[f"{noise_type}_noise_hb{idx}_top"][f"CBC_{icbc}"] = ch_noise_distr_hb_top_cbc_list
 
-            
+                    if noise_type == "common":
+                        fit = ch_noise_distr_hb_cbc.GetFunction("chipFit")
+                        if not fit:
+                            logger.warning("... Cannot find fit function 'chipFit' in histogram ... skipping ...")
+                            continue
+                        params = {fit.GetParName(i):fit.GetParameters()[i] for i in range(fit.GetNpar())}
+
+                        fit_bot = ch_noise_distr_hb_bot_cbc.GetFunction("chipFit")
+                        params_bot = {fit_bot.GetParName(i):fit_bot.GetParameters()[i] for i in range(fit_bot.GetNpar())}
+
+                        fit_top = ch_noise_distr_hb_top_cbc.GetFunction("chipFit")
+                        params_top = {fit_top.GetParName(i):fit_top.GetParameters()[i] for i in range(fit_top.GetNpar())}
+
+                        noise_dict[f"{noise_type}_noise_hb{idx}"][f"CBC_{icbc}_fit_params"] = params
+                        noise_dict[f"{noise_type}_noise_hb{idx}_bot"][f"CBC_{icbc}_fit_params"] = params_bot
+                        noise_dict[f"{noise_type}_noise_hb{idx}_top"][f"CBC_{icbc}_fit_params"] = params_top
+                        #from IPython import embed; embed(); exit()
+                        
         return noise_dict
 
 
