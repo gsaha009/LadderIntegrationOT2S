@@ -1,4 +1,4 @@
-maintag: IPHC_coldBox_L4
+maintag: IPHC_coldBox_L4_fixcmn
 
 ladder: yes
 single_module_box: no
@@ -68,14 +68,10 @@ pede_hname_chip_level:
 
 
 
-
-
 files:
   RoomTemp:
     Run1:
-      #tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_41/Results.root
-      #tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/MonitorDQM_2025-06-18_16-17-45_Run_73.root
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_209/Results.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_209/MonitorDQM_2025-07-29_08-56-20.root
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_2/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_2/MonitorDQM_2025-09-03_09-52-14.root
 
 output: /Users/gsaha/Work/IPHC/TrackerUpgrade/Output
