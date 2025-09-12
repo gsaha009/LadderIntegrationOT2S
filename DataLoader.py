@@ -219,11 +219,18 @@ class DataLoader:
                         module_tag = module_info[f"board_{ibrd}_optical_{iopt}"]
 
                         # $$$$$$$$$$$$$$$$$$$$$ Data Structure $$$$$$$$$$$$$$$$ #
-                        main_noise_dict[module_tag] = {
-                            temperature_key: {
-                                test_iter: {}
+                        if module_tag in main_noise_dict:
+                            main_noise_dict[module_tag].update({
+                                temperature_key: {
+                                    test_iter: {}
+                                }
+                            })
+                        else:
+                            main_noise_dict[module_tag] = {
+                                temperature_key: {
+                                    test_iter: {}
+                                }
                             }
-                        }
 
                         if self.testinfo.get("check_sensor_temperature") == True:
                             # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
@@ -335,11 +342,19 @@ class DataLoader:
                         module_tag = mod_key
 
                         # $$$$$$$$$$$$$$$$$$$$$ Data Structure $$$$$$$$$$$$$$$$ #
-                        main_noise_dict[module_tag] = {
-                            temperature_key: {
-                                test_iter: {}
+                        if module_tag in main_noise_dict:
+                            main_noise_dict[module_tag].update({
+                                temperature_key: {
+                                    test_iter: {}
+                                }
+                            })
+                        else:
+                            main_noise_dict[module_tag] = {
+                                temperature_key: {
+                                    test_iter: {}
+                                }
                             }
-                        }
+                        
                         if self.testinfo.get("check_sensor_temperature") == True:
                             # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
                             #              Sensor Temperature and timestamps from DQM ROOT file               #

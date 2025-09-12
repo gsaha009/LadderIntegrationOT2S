@@ -52,6 +52,7 @@ def setup_logger():
 
     
 def main():
+    
     real_start = time.perf_counter()
     cpu_start  = time.process_time()
     
@@ -129,9 +130,13 @@ def main():
     cpu_stop  = time.process_time()
     
     logger.info("Plotting done ...")
+
+    #current, peak = tracemalloc.get_traced_memory()
+
     logger.info(f"Real time : {real_stop - real_start:.3f} seconds")
     logger.info(f"CPU time  : {cpu_stop - cpu_start:.3f} seconds")
-    
+
+
         
 if __name__ == "__main__":
     main()

@@ -2,24 +2,89 @@
 # --- Used by the Dataloader & Plotter --- #
 # ---------------------------------------- #
 
+# channel noise : always yes
+# specific plots
+strip_noise_vs_channels:
+  doplot: no
+  ylim: None # list
+
+
+
+
 # check pedestal or not?
 check_pedestal : yes
+
+
+
+
+
 
 # must be switched off for quick test results
 # optional for full test results or for results from db (always full test)
 check_common_noise : yes
 
+
+
+
+
+
+
 # fitting common mode noise
 fit_common_noise : yes
+
+
+
+
+
+
+
 
 # enable potato like grading style
 potato_like_grading : no
 
+
+
+
+
+
+
+
 # check sensor temperature
 check_sensor_temperature: yes
+
+
+
+
+
+
+
+
+
+# plots and details
+sensor_temperature_vs_time_stamps:
+  doplot: no
+  ylim: None # list
+
+
+
+
+
+
+
+
 
 # comparing different setup
 compare_two_setup: yes
 
+
+
+
+
+
 # a flag to make sure if two same set of modules or different set of modules need to be compared
-are_same_modules: yes
+are_same_modules: no
+
+
+# format for plots
+# png, pdf, jpeg
+plot_extn: png
