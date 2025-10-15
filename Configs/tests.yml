@@ -87,4 +87,5 @@ are_same_modules: no
 
 # format for plots
 # png, pdf, jpeg
-plot_extn: png
+plot_extn: pdf
+plot_dpi: 300

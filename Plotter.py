@@ -114,12 +114,18 @@ class Plotter:
                      name = "Default",
                      **kwargs):
 
-        data = np.abs(np.array(data)).T
-
+        if isinstance(data, np.ndarray):
+            data = np.abs(data).T
+        elif isinstance(data, list):
+            data = np.abs(np.array(data)).T
+        else:
+            raise RuntimeError("Wrong data format ...")
+            
         #from IPython import embed; embed(); exit() 
         basics = self.__basic_settings()
 
         xticklabels = kwargs.get("xticklabels", None)
+        yticklabels = kwargs.get("yticklabels", None)
         colmap = kwargs.get("colmap", "viridis")
         outdir = kwargs.get("outdir", "../Output")
         vmin = kwargs.get("vmin", None)
@@ -132,15 +138,26 @@ class Plotter:
         if vmin is None:
             vmin = float(np.min(data))
                 
-        threshold = np.percentile(data, 95)
-        masked_data = np.ma.masked_greater(data, threshold)
-
+        #threshold = np.percentile(data, 99)
+        #masked_data = np.ma.masked_greater(data, threshold)
+        #from IPython import embed; embed(); exit()
+        
+        if data.shape[0] == 17:
+            mask = np.zeros_like(data, dtype=bool)
+            mask[8, :] = True  # exclude SEH row from scaling
+            #masked_data = np.ma.masked_array(masked_data, mask)
+            masked_data = np.ma.masked_array(data, mask)
+        else:
+            masked_data = data
+            
         cmap=plt.cm.get_cmap(colmap).copy()
-        cmap.set_bad(color="#800000") 
+        cmap.set_bad(color="#FFFFFF") 
         
         #vmax = float(np.percentile(data, 95))
         if vmax is None:
-            vmax=threshold
+            #vmax=threshold
+            vmax=float(np.max(data))
+            
         im = ax.imshow(masked_data, cmap=cmap, aspect="auto", origin="lower", vmin=vmin, vmax=vmax)
 
         cbar = plt.colorbar(im, ax=ax)
@@ -150,30 +167,48 @@ class Plotter:
         ax.set_xticks(np.arange(data.shape[1]))
         ax.set_yticks(np.arange(data.shape[0]))
         ax.set_xticklabels(xticklabels)
-        ax.set_yticklabels([f'CBC_{i}' for i in range(8)])
+        if yticklabels is None:
+            yticklabels = [f'CBC_{i}' for i in range(8)]
+        ax.set_yticklabels(yticklabels)
 
         plt.setp(ax.get_xticklabels(), rotation=90, ha="right", rotation_mode="anchor")
 
         # Annotate each cell with the value
+        """
+        threshold2 = np.percentile(data, 50)
         for i in range(data.shape[0]):
+            if i == 8: continue
             for j in range(data.shape[1]):
                 if data[i, j] <= threshold:
                     ax.text(
                         j, i, f"{data[i, j]:.2f}",  # format with 2 decimals
                         ha="center", va="center",
-                        color="white" if data[i, j] < (threshold/2) else "black",
+                        color="white" if data[i, j] < threshold2 else "black",
                         fontsize=10
                     )
                 else:
                     ax.text(
                         j, i, f"{data[i, j]:.2f}",
                         ha="center", va="center",
-                        color="white", fontsize=9, fontweight="bold"  # highlight outlier text
+                        color="black", fontsize=9, fontweight="bold"  # highlight outlier text
                     )
+        """
+        threshold2 = np.percentile(data, 50)
+        for i in range(data.shape[0]):
+            if i == 8: continue
+            for j in range(data.shape[1]):
+                ax.text(
+                    j, i, f"{data[i, j]:.2f}",  # format with 2 decimals
+                    ha="center", va="center",
+                    #color="white" if data[i, j] < threshold2 else "black",
+                    color="black",
+                    fontsize=8,
+                )
+        
         ax.set_title(f"{title}", fontsize=14, loc='right')
-        ax.tick_params(direction="in", top=False, right=False, labelsize=13, length=3)
+        ax.tick_params(direction="in", top=False, right=False, labelsize=12, length=3)
         plt.tight_layout()
-        fig.savefig(f"{outdir}/{name}.{self.testinfo.get('plot_extn')}", dpi=200)
+        fig.savefig(f"{outdir}/{name}.{self.testinfo.get('plot_extn')}", dpi=self.testinfo.get('plot_dpi'))
         plt.close()
 
                 
@@ -301,7 +336,7 @@ class Plotter:
 
         #print(f"Final number of xticks: {len(ax.get_xticks())}")
         plt.tight_layout()
-        fig.savefig(f"{outdir}/{name}.{self.testinfo.get('plot_extn')}", dpi=200)
+        fig.savefig(f"{outdir}/{name}.{self.testinfo.get('plot_extn')}", dpi=self.testinfo.get('plot_dpi'))
         plt.close()
 
 
@@ -381,7 +416,7 @@ class Plotter:
         ax.set_title(f"{title}", fontsize=14, loc='right')
 
         plt.tight_layout()
-        fig.savefig(f"{outdir}/{name}.{self.testinfo.get('plot_extn')}", dpi=200)
+        fig.savefig(f"{outdir}/{name}.{self.testinfo.get('plot_extn')}", dpi=self.testinfo.get('plot_dpi'))
         plt.close()
 
         
@@ -463,7 +498,7 @@ class Plotter:
 
         ax.set_title(f"{title}", fontsize=14, loc='right')
         plt.tight_layout()
-        fig.savefig(f"{outdir}/{name}.{self.testinfo.get('plot_extn')}", dpi=200)
+        fig.savefig(f"{outdir}/{name}.{self.testinfo.get('plot_extn')}", dpi=self.testinfo.get('plot_dpi'))
         plt.close()
 
 
@@ -514,7 +549,7 @@ class Plotter:
         ax.set_title(f"{title}", fontsize=14, loc='right')
         
         plt.tight_layout()
-        fig.savefig(f"{outdir}/{name}.{self.testinfo.get('plot_extn')}", dpi=200)
+        fig.savefig(f"{outdir}/{name}.{self.testinfo.get('plot_extn')}", dpi=self.testinfo.get('plot_dpi'))
         plt.close()
 
 
@@ -1507,55 +1542,57 @@ class Plotter:
 
 
 
-                    common_noise_giovanni_hb0_cbc = common_noise_giovanni_hb0_cbc_mod[temp]
-                    self.plot_heatmap(common_noise_giovanni_hb0_cbc,
-                                      title       = f"CMN-hb0: {temp}",
-                                      name        = f"Plot_CMN_Fraction_Giovanni_hb0_{temp}_{datakey}",
+                    common_noise_giovanni_hb0_cbc = np.array(common_noise_giovanni_hb0_cbc_mod[temp])
+                    common_noise_giovanni_hb1_cbc = np.array(common_noise_giovanni_hb1_cbc_mod[temp])
+                    common_noise_giovanni_cbc = np.concatenate((common_noise_giovanni_hb0_cbc,
+                                                                np.zeros_like(common_noise_giovanni_hb0_cbc[:,:1]),
+                                                                common_noise_giovanni_hb1_cbc), axis=1)
+                    
+                    self.plot_heatmap(common_noise_giovanni_cbc,
+                                      title       = f"CMN frac: {temp}",
+                                      name        = f"Plot_CMN_Fraction_Giovanni_bothHybrids_{temp}_{datakey}",
                                       xticklabels = moduleIDs,
+                                      yticklabels = [f"Hb0_CBC{i}" for i in range(8)] + ["SEH"] + [f"Hb1_CBC{i}" for i in range(8)],
                                       colmap      = "coolwarm",
-                                      outdir      = _outdirCBC) 
-                    common_noise_giovanni_hb1_cbc = common_noise_giovanni_hb1_cbc_mod[temp]
-                    self.plot_heatmap(common_noise_giovanni_hb1_cbc,
-                                      title       = f"CMN-hb1: {temp}",
-                                      name        = f"Plot_CMN_Fraction_Giovanni_hb1_{temp}_{datakey}",
-                                      xticklabels = moduleIDs,
-                                      colmap      = "coolwarm",
-                                      outdir      = _outdirCBC) 
-
-
-                    common_noise_iphc_hb0_cbc = common_noise_iphc_hb0_cbc_mod[temp]
-                    self.plot_heatmap(common_noise_iphc_hb0_cbc,
-                                      title       = f"CMN-hb0: {temp}",
-                                      name        = f"Plot_CMN_Fraction_Iphc_hb0_{temp}_{datakey}",
-                                      xticklabels = moduleIDs,
-                                      colmap      = "coolwarm",
-                                      outdir      = _outdirCBC) 
-                    common_noise_iphc_hb1_cbc = common_noise_iphc_hb1_cbc_mod[temp]
-                    self.plot_heatmap(common_noise_iphc_hb1_cbc,
-                                      title       = f"CMN-hb1: {temp}",
-                                      name        = f"Plot_CMN_Fraction_Iphc_hb1_{temp}_{datakey}",
-                                      xticklabels = moduleIDs,
-                                      colmap      = "coolwarm",
+                                      #vmin        = 0.5,
+                                      #vmax        = 1.5,
                                       outdir      = _outdirCBC) 
                     
-                    common_noise_potato_hb0_cbc = common_noise_frac_potato_hb0_cbc_mod[temp]
-                    self.plot_heatmap(common_noise_potato_hb0_cbc,
-                                      title       = f"CMN-Potato-hb0: {temp}",
-                                      name        = f"Plot_CMN_Fraction_Potato_hb0_{temp}_{datakey}",
+                    common_noise_iphc_hb0_cbc = np.array(common_noise_iphc_hb0_cbc_mod[temp])
+                    common_noise_iphc_hb1_cbc = np.array(common_noise_iphc_hb1_cbc_mod[temp])
+                    common_noise_iphc_cbc = np.concatenate((common_noise_iphc_hb0_cbc,
+                                                            np.zeros_like(common_noise_iphc_hb0_cbc[:,:1]),
+                                                            common_noise_iphc_hb1_cbc), axis=1)
+
+                    self.plot_heatmap(common_noise_iphc_cbc,
+                                      title       = f"CMN frac: {temp}",
+                                      name        = f"Plot_CMN_Fraction_IPHC_bothHybrids_{temp}_{datakey}",
                                       xticklabels = moduleIDs,
+                                      yticklabels = [f"Hb0_CBC{i}" for i in range(8)] + ["SEH"] + [f"Hb1_CBC{i}" for i in range(8)],
                                       colmap      = "coolwarm",
-                                      vmin        = 0.0, vmax = 0.5,
-                                      outdir      = _outdirCBC) 
-                    common_noise_potato_hb1_cbc = common_noise_frac_potato_hb1_cbc_mod[temp]
-                    self.plot_heatmap(common_noise_potato_hb1_cbc,
-                                      title       = f"CMN-Potato-hb1: {temp}",
-                                      name        = f"Plot_CMN_Fraction_Potato_hb1_{temp}_{datakey}",
-                                      xticklabels = moduleIDs,
-                                      colmap      = "coolwarm",
-                                      vmin        = 0.0, vmax = 0.5,
+                                      #vmin        = 0.5,
+                                      #vmax        = 1.5,
                                       outdir      = _outdirCBC)
                     
                     
+                    common_noise_potato_hb0_cbc = np.array(common_noise_frac_potato_hb0_cbc_mod[temp])
+                    common_noise_potato_hb1_cbc = np.array(common_noise_frac_potato_hb1_cbc_mod[temp])
+                    common_noise_potato_cbc = np.concatenate((common_noise_potato_hb0_cbc,
+                                                              np.zeros_like(common_noise_potato_hb0_cbc[:,:1]),
+                                                              common_noise_potato_hb1_cbc), axis=1)
+
+                    self.plot_heatmap(common_noise_potato_cbc,
+                                      title       = f"CMN frac: {temp}",
+                                      name        = f"Plot_CMN_Fraction_Potato_bothHybrids_{temp}_{datakey}",
+                                      xticklabels = moduleIDs,
+                                      yticklabels = [f"Hb0_CBC{i}" for i in range(8)] + ["SEH"] + [f"Hb1_CBC{i}" for i in range(8)],
+                                      colmap      = "coolwarm",
+                                      #vmin        = 0.5,
+                                      #vmax        = 1.5,
+                                      outdir      = _outdirCBC)
+
+
+    
                     #from IPython import embed; embed(); exit()
                     common_noise_fit_hb0_cbc = common_noise_fit_hb0_cbc_mod[temp]
                     is_empty = all(not x for x in common_noise_fit_hb0_cbc)
@@ -1640,23 +1677,23 @@ class Plotter:
                                           outdir      = _outdirCBC) 
                         
                     common_noise_crude_hb0_cbc = common_noise_crude_hb0_cbc_mod[temp]
-                    self.plot_heatmap(common_noise_crude_hb0_cbc,
-                                      title       = f"CMN-hb0: {temp}",
-                                      name        = f"Plot_CMN_Fraction_Crude_hb0_{temp}_{datakey}",
-                                      xticklabels = moduleIDs,
-                                      colmap      = "coolwarm",
-                                      vmin        = 0.5, vmax = +1.0,
-                                      cb_label	  = "(σ - 0.5x√µ)/σ",
-                                      outdir      = _outdirCBC) 
+                    #self.plot_heatmap(common_noise_crude_hb0_cbc,
+                    #                  title       = f"CMN-hb0: {temp}",
+                    #                  name        = f"Plot_CMN_Fraction_Crude_hb0_{temp}_{datakey}",
+                    #                  xticklabels = moduleIDs,
+                    #                  colmap      = "coolwarm",
+                    #                  vmin        = 0.5, vmax = +1.0,
+                    #                  cb_label	  = "(σ - 0.5x√µ)/σ",
+                    #                  outdir      = _outdirCBC) 
                     common_noise_crude_hb1_cbc = common_noise_crude_hb1_cbc_mod[temp]
-                    self.plot_heatmap(common_noise_crude_hb1_cbc,
-                                      title       = f"CMN-hb1: {temp}",
-                                      name        = f"Plot_CMN_Fraction_Crude_hb1_{temp}_{datakey}",
-                                      xticklabels = moduleIDs,
-                                      colmap      = "coolwarm",
-                                      vmin        = 0.5, vmax = +1.0,
-                                      cb_label    = "(σ - 0.5x√µ)/σ",
-                                      outdir      = _outdirCBC) 
+                    #self.plot_heatmap(common_noise_crude_hb1_cbc,
+                    #                  title       = f"CMN-hb1: {temp}",
+                    #                  name        = f"Plot_CMN_Fraction_Crude_hb1_{temp}_{datakey}",
+                    #                  xticklabels = moduleIDs,
+                    #                  colmap      = "coolwarm",
+                    #                  vmin        = 0.5, vmax = +1.0,
+                    #                  cb_label    = "(σ - 0.5x√µ)/σ",
+                    #                  outdir      = _outdirCBC) 
 
                     
                 else:
@@ -2010,7 +2047,7 @@ class Plotter:
                                     xticklabels = moduleIDs,
                                     ylabel     = "CMN (%)",
                                     markersize = 10,
-                                    ylim       = [0.0,20.0],
+                                    ylim       = [0.0,10.0],
                                     outdir     = self.outdir,
                                     fit        = False,
                                     tick_offset= tick_offset)
