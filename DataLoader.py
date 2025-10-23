@@ -86,7 +86,7 @@ class DataLoader:
         
 
 
-        if (noise_type == "common") and (self.testinfo.get("check_common_noise") == True):
+        if ("common" in noise_type) and (self.testinfo.get("check_common_noise") == True):
             #print(f"{root_dir}/D_B({ibrd})_{hname_mod}_OpticalGroup({iopt})")
             #print(f"{root_dir}/D_B({ibrd})_{hname_mod_bot}_OpticalGroup({iopt})")
             #print(f"{root_dir}/D_B({ibrd})_{hname_mod_top}_OpticalGroup({iopt})")
@@ -148,7 +148,7 @@ class DataLoader:
                     ch_noise_distr_hb_top_cbc_list = self.__get_hist_array(ch_noise_distr_hb_top_cbc)
                     noise_dict[f"{noise_type}_noise_hb{idx}_top"][f"CBC_{icbc}"] = ch_noise_distr_hb_top_cbc_list
 
-                    if noise_type == "common":
+                    if "common" in noise_type:
                         fit = ch_noise_distr_hb_cbc.GetFunction("chipFit")
                         if not fit:
                             logger.warning("... Cannot find fit function 'chipFit' in histogram ... skipping ...")
@@ -214,7 +214,8 @@ class DataLoader:
                 for ibrd in range(nboards):
                     logger.info(f"BeBoard : {ibrd}")
                     # Iterating over nOpticals
-                    for iopt in range(nopticals):
+                    #for iopt in range(nopticals):
+                    for iopt in range(nopticals[0], nopticals[1]):
                         logger.info(f"Optical Group : {iopt}")
                         module_tag = module_info[f"board_{ibrd}_optical_{iopt}"]
 
@@ -290,6 +291,26 @@ class DataLoader:
                                                                           noise_type="common")
                             
                             main_noise_dict[module_tag][temperature_key][test_iter].update(common_noise_dict)
+
+                            if self.testinfo.get("fit_simultaneous_common_noise") == True:
+                                common_3sigma_noise_dict = self.__prepare_noise_data(root_ptr,
+                                                                                     ibrd,
+                                                                                     iopt,
+                                                                                     hname_mod=self.fileinfo['common_noise_3sigma_hname_module_level'],
+                                                                                     hname_mod_bot=self.fileinfo['common_noise_3sigma_hname_module_level_bottom'],
+                                                                                     hname_mod_top=self.fileinfo['common_noise_3sigma_hname_module_level_top'],
+                                                                                     hname_hb=self.fileinfo['common_noise_3sigma_hname_hybrid_level'],
+                                                                                     hname_hb_bot=self.fileinfo['common_noise_3sigma_hname_hybrid_level_bottom'],
+                                                                                     hname_hb_top=self.fileinfo['common_noise_3sigma_hname_hybrid_level_top'],
+                                                                                     hname_cbc=self.fileinfo['common_noise_3sigma_hname_chip_level'],
+                                                                                     hname_cbc_bot=self.fileinfo['common_noise_3sigma_hname_chip_level_bottom'],
+                                                                                     hname_cbc_top=self.fileinfo['common_noise_3sigma_hname_chip_level_top'],
+                                                                                     cbc_level=True,
+                                                                                     noise_type="common_3sigma")
+                                
+                                main_noise_dict[module_tag][temperature_key][test_iter].update(common_3sigma_noise_dict)
+
+                            
                         else:
                             logger.warning("skip checking common mode noise")
 
@@ -337,7 +358,7 @@ class DataLoader:
                 for ibrd in range(nboards):
                     logger.info(f"BeBoard : {ibrd}")
                     # Iterating over nOpticals
-                    for iopt in range(nopticals):
+                    for iopt in range(nopticals[0], nopticals[1]):
                         logger.info(f"Optical Group : {iopt}")
                         module_tag = mod_key
 
@@ -418,6 +439,25 @@ class DataLoader:
                             
                             main_noise_dict[module_tag][temperature_key][test_iter].update(common_noise_dict)
 
+                            if self.testinfo.get("fit_simultaneous_common_noise") == True:
+                                common_3sigma_noise_dict = self.__prepare_noise_data(root_ptr,
+                                                                                     ibrd,
+                                                                                     iopt,
+                                                                                     hname_mod=self.fileinfo['common_noise_3sigma_hname_module_level'],
+                                                                                     hname_mod_bot=self.fileinfo['common_noise_3sigma_hname_module_level_bottom'],
+                                                                                     hname_mod_top=self.fileinfo['common_noise_3sigma_hname_module_level_top'],
+                                                                                     hname_hb=self.fileinfo['common_noise_3sigma_hname_hybrid_level'],
+                                                                                     hname_hb_bot=self.fileinfo['common_noise_3sigma_hname_hybrid_level_bottom'],
+                                                                                     hname_hb_top=self.fileinfo['common_noise_3sigma_hname_hybrid_level_top'],
+                                                                                     hname_cbc=self.fileinfo['common_noise_3sigma_hname_chip_level'],
+                                                                                     hname_cbc_bot=self.fileinfo['common_noise_3sigma_hname_chip_level_bottom'],
+                                                                                     hname_cbc_top=self.fileinfo['common_noise_3sigma_hname_chip_level_top'],
+                                                                                     cbc_level=True,
+                                                                                     noise_type="common_3sigma")
+                                
+                                main_noise_dict[module_tag][temperature_key][test_iter].update(common_3sigma_noise_dict)
+                            
+
                         if self.testinfo.get("check_pedestal") == True:
                             pede_dict = self.__prepare_pede_data(root_ptr,
                                                                  ibrd,
@@ -440,7 +480,8 @@ class DataLoader:
         main_noise_dict = {}
         
         nboards        = self.fileinfo["n_boards"]
-        nopticals      = self.fileinfo["n_opticals"]
+        #nopticals      = self.fileinfo["n_opticals"]
+        nopticals      = [self.fileinfo["n_opticals_start"], self.fileinfo["n_opticals_stop"]]
         root_file_info = self.fileinfo["files"]
 
         if self.in_kira & self.in_ladder:
@@ -455,8 +496,8 @@ class DataLoader:
                                                                module_info)
         elif self.in_kira:
             main_noise_dict = self.__get_noise_data_for_kira(nboards,
-                                                               nopticals,
-                                                               root_file_info)
+                                                             nopticals,
+                                                             root_file_info)
         
         else:
             raise RuntimeError("At least one of the single_module_box & ladder must be True")
