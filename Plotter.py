@@ -5,6 +5,7 @@
 import os
 import sys
 import yaml
+import importlib
 import numpy as np
 
 import matplotlib.pyplot as plt
@@ -15,6 +16,8 @@ import mplhep as hep
 hep.style.use("CMS")
 
 from Fitter import Fitter
+#from modules.2SLadderCMNAna.CMNFitter import *
+CMNmod = importlib.import_module("modules.2SLadderCMNAna.CMNFitter")
 
 import logging
 logger = logging.getLogger('main')
@@ -1290,19 +1293,37 @@ class Plotter:
                         append_cmn_potato_result(common_noise_frac_potato_hb0_cbc_mod[martaTemp], common_noise_hb0_dict)
                         append_cmn_potato_result(common_noise_frac_potato_hb1_cbc_mod[martaTemp], common_noise_hb1_dict)
                         
-                        """
-                        common_noise_fit_hb0_cbc_bot_mod[martaTemp].append([common_noise_hb0_bot_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
-                        common_noise_fit_hb0_cbc_bot_mod[martaTemp].append(
-                            [
-                                common_noise_hb0_bot_dict[f'CBC_{i}_fit_params']['cmnFraction']
-                                for i in range(8)
+                        #common_noise_fit_hb0_cbc_bot_mod[martaTemp].append([common_noise_hb0_bot_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
+                        #common_noise_fit_hb0_cbc_bot_mod[martaTemp].append(
+                        #    [
+                        #        common_noise_hb0_bot_dict[f'CBC_{i}_fit_params']['cmnFraction']
+                        #        for i in range(8)
+                        #        
+                        #common_noise_fit_hb0_cbc_top_mod[martaTemp].append([common_noise_hb0_top_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
+                        #common_noise_fit_hb1_cbc_mod[martaTemp].append([common_noise_hb1_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
+                        #common_noise_fit_hb1_cbc_bot_mod[martaTemp].append([common_noise_hb1_bot_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
+                        #common_noise_fit_hb1_cbc_top_mod[martaTemp].append([common_noise_hb1_top_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
+
+
+                        if self.testinfo.get("fit_simultaneous_common_noise") == True:
+                            common_noise_3sigma_hb0_dict = noiseDict['common_3sigma_noise_hb0']
+                            common_noise_3sigma_hb1_dict = noiseDict['common_3sigma_noise_hb1']
+
+                            # loop over CBCs
+                            for i in range(8):
+                                nHits_0sigma = np.array(common_noise_hb0_dict[f'CBC_{i}'])[:,0]
+                                nHits_3sigma = np.array(common_noise_3sigma_hb0_dict[f'CBC_{i}'])[:,0]
+
+                                logger.info(f"fitting nHits for CBC_{i}")
+                                sigma_fit, k_probs_fit, res = CMNmod.fit_k_and_sigma_from_hists(nHits_0sigma,
+                                                                                                nHits_3sigma)
                                 
-                        common_noise_fit_hb0_cbc_top_mod[martaTemp].append([common_noise_hb0_top_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
-                        common_noise_fit_hb1_cbc_mod[martaTemp].append([common_noise_hb1_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
-                        common_noise_fit_hb1_cbc_bot_mod[martaTemp].append([common_noise_hb1_bot_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
-                        common_noise_fit_hb1_cbc_top_mod[martaTemp].append([common_noise_hb1_top_dict[f'CBC_{i}_fit_params']['cmnFraction'] for i in range(8)])
-                        """
-                        
+                                from IPython import embed; embed(); exit()
+                                
+                        else:
+                            logger.warning("Skip common noise extraction by fitting nHits simultaneously for 0 & 3 sigma noise")
+
+                            
                     else:
                         logger.warning("skip plotting common mode noise")
 

@@ -61,6 +61,32 @@ common_noise_hname_module_level_bottom:
 common_noise_hname_module_level_top:
  - CommonNoiseHitsTop_OccupancyDriven
 
+
+# common noise module level (SigmaNoise_3.00)
+common_noise_3sigma_hname_module_level:
+ - CommonNoiseHits_SigmaNoise_3.00
+common_noise_3sigma_hname_module_level_bottom:
+ - CommonNoiseHitsBottom_SigmaNoise_3.00
+common_noise_3sigma_hname_module_level_top:
+ - CommonNoiseHitsTop_SigmaNoise_3.00
+
+# common noise histogram names (hybrid level : SigmaNoise_3.00)
+common_noise_3sigma_hname_hybrid_level:
+ - CommonNoiseHits_SigmaNoise_3.00
+common_noise_3sigma_hname_hybrid_level_bottom:
+ - CommonNoiseHitsBottom_SigmaNoise_3.00
+common_noise_3sigma_hname_hybrid_level_top:
+ - CommonNoiseHitsTop_SigmaNoise_3.00
+
+# common noise histogram names (chip level : SigmaNoise_3.00)
+common_noise_3sigma_hname_chip_level:
+ - CommonNoiseHits_SigmaNoise_3.00
+common_noise_3sigma_hname_chip_level_bottom:
+ - CommonNoiseHitsBottom_SigmaNoise_3.00
+common_noise_3sigma_hname_chip_level_top:
+ - CommonNoiseHitsTop_SigmaNoise_3.00
+
+
 # pedestal at CBC level
 pede_hname_chip_level:
  - ChannelPedestal
