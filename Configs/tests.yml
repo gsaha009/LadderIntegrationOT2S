@@ -31,7 +31,7 @@ check_common_noise : yes
 
 # fitting common mode noise
 fit_common_noise : yes
-
+fit_simultaneous_common_noise : yes
 
 
 
