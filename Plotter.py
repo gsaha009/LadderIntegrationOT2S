@@ -196,14 +196,15 @@ class Plotter:
                         color="black", fontsize=9, fontweight="bold"  # highlight outlier text
                     )
         """
-        threshold2 = np.percentile(data, 50)
+        #threshold2 = np.percentile(data, 50)
+        threshold2 = np.median(data)
         for i in range(data.shape[0]):
             if i == 8: continue
             for j in range(data.shape[1]):
                 ax.text(
                     j, i, f"{data[i, j]:.2f}",  # format with 2 decimals
                     ha="center", va="center",
-                    #color="white" if data[i, j] < threshold2 else "black",
+                    #color="black" if data[i, j] < threshold2 else "white",
                     color="black",
                     fontsize=8,
                 )
@@ -214,7 +215,64 @@ class Plotter:
         fig.savefig(f"{outdir}/{name}.{self.testinfo.get('plot_extn')}", dpi=self.testinfo.get('plot_dpi'))
         plt.close()
 
-                
+
+    def plot_fitted_result(self,
+                           x : list[np.array],
+                           y : list[np.array],
+                           labels : list[str],
+                           title = "default",
+                           name = "default",
+                           **kwargs):
+        
+
+        assert len(x) == 3, "max x entries must be 3"
+        assert len(y) == 3, "max y entries must be 3"
+        
+        basics = self.__basic_settings()
+        outdir = kwargs.get("outdir", "../Output")
+        h3_w = kwargs.get("w", None)
+        
+        fig, axes = plt.subplots(1,3, figsize=(14,8))
+        #hep.cms.text(basics["heplogo"], loc=0) # CMS
+        fig.text(0.05, 0.97, "CMS", fontsize=40, fontweight='bold', ha='left', va='top')
+        fig.text(0.14, 0.97, "Internal", fontsize=30, style='italic', ha='left', va='top')
+
+        fig.text(0.95, 0.97, f"{title}", fontsize=20, ha='right', va='top')
+        #plt.title(f"{title}", fontsize=13, loc='right')
+
+        plt.subplots_adjust(
+            left=0.08,   # reduce left margin                                                                                                      
+            right=0.98,  # reduce right margin                                                                                                     
+            top=0.80,    # reduce top margin                                                                                                       
+            bottom=0.08, # reduce bottom margin                                                                                                    
+            wspace=0.25, # horizontal spacing between subplots                                                                                     
+            hspace=0.35  # vertical spacing                                                                                                        
+        )
+        
+        axes[0].bar(x[0][0], y[0][0], alpha=0.6, label="Observed")
+        axes[0].plot(x[0][1], y[0][1], 'r-', lw=2, label="Fitted")
+        axes[0].set_title(labels[0])
+        axes[0].legend()
+
+        axes[1].bar(x[1][0], y[1][0], alpha=0.6, label="Observed", color="orange")
+        axes[1].plot(x[1][1], y[1][1], 'r-', lw=2, label="Fitted")
+        axes[1].set_title(labels[1])
+        axes[1].set_xlim((0,10))
+        axes[1].legend()
+
+        axes[2].bar(x[2][0], y[2][0], width=h3_w, alpha=0.5, label="Fitted")
+        axes[2].set_title(labels[2])
+        #axes[2].set_yscale('log')                                                                                                                 
+        axes[2].legend()
+        
+        
+        #plt.tight_layout(pad=0.7, w_pad=0.8, h_pad=0.8)
+        fig.savefig(f"{outdir}/{name}.{self.testinfo.get('plot_extn')}", dpi=self.testinfo.get('plot_dpi'))
+        plt.close()
+
+
+
+        
     
     def plot_basic(self,
                    x = None,
@@ -601,6 +659,92 @@ class Plotter:
         arr = np.array(arr).reshape(2,-1).T.reshape(-1)
         return arr
 
+
+    def __get_noisy_and_dead_channels(self, noise_array):
+        noise = np.array(noise_array)[:,0]
+        channels = np.arange(noise.shape[0])
+        median = np.median(noise)
+        mad = np.median(np.abs(noise - median))
+        modified_z_scores = 0.6745 * (noise - median) / mad
+        pos_mask = modified_z_scores > 3.5
+        #neg_mask = modified_z_scores < -2*3.5
+        neg_mask = noise < 3.0
+        pos_outliers = channels[pos_mask]
+        neg_outliers = channels[neg_mask]
+        return pos_outliers.tolist(), neg_outliers.tolist()
+
+    def get_noisy_and_dead_channels_cbc(self, strip_noise_dict):
+        noisy_ch_list = []
+        dead_ch_list = []
+        for i in range(8):
+            hb0_noise_ = strip_noise_dict[f"CBC_{i}"]
+            #from IPython import embed; embed(); exit()
+            noisy_channels, dead_channels = self.__get_noisy_and_dead_channels(hb0_noise_)
+            noisy_ch_list.append(len(noisy_channels))
+            dead_ch_list.append(len(dead_channels)+(254-len(hb0_noise_)))
+        return noisy_ch_list, dead_ch_list
+
+
+
+    def __simfit_and_analyse(self, noise_0_dict, noise_3_dict, labels: list, title: str, name: str, outdir: str):
+        fracs = []
+        # loop over CBCs
+        for i in range(8):
+            nHits_0sigma = np.array(noise_0_dict[f'CBC_{i}'])[:,0]
+            sigmaHits_0sigma = np.array(noise_0_dict[f'CBC_{i}'])[:,1]
+            nHits_3sigma = np.array(noise_3_dict[f'CBC_{i}'])[:,0]
+            sigmaHits_3sigma = np.array(noise_3_dict[f'CBC_{i}'])[:,1]
+
+            logger.info(f"fitting nHits for CBC_{i}")
+            sigma_fit, k_probs_fit, res = CMNmod.fit_k_and_sigma_from_hists(nHits_0sigma,
+                                                                            nHits_3sigma,
+                                                                            sigmaHits_0sigma,
+                                                                            sigmaHits_3sigma)
+                                
+            P_A, P_B, R_A, R_B = CMNmod.predict_distributions(sigma_fit, k_probs_fit)
+            expA = 10000 * P_A
+            expB = 10000 * P_B
+            #from IPython import embed; embed(); exit()
+            
+            N_BINS_K = 20
+            K_MIN, K_MAX = -2.0, 2.0
+            BIN_EDGES = np.linspace(K_MIN, K_MAX, N_BINS_K + 1)
+            BIN_CENTERS = 0.5 * (BIN_EDGES[:-1] + BIN_EDGES[1:])
+            BIN_WIDTH = BIN_EDGES[1] - BIN_EDGES[0]
+            
+            
+            x = [ [np.arange(nHits_0sigma.shape[0]), np.arange(len(expA))] ,
+                  [np.arange(nHits_3sigma.shape[0]), np.arange(len(expB))] ,
+                  [BIN_CENTERS] ]
+            y = [ [nHits_0sigma/10000, P_A] ,
+                  [nHits_3sigma/10000, P_B] ,
+                  [k_probs_fit] ]
+            h3_width = BIN_WIDTH*0.9
+            
+            self.plot_fitted_result(x = x,
+                                    y = y,
+                                    w = h3_width,
+                                    labels=labels,
+                                    title = f"{title}_CBC_{i}",
+                                    name = f"{name}_CBC_{i}",
+                                    outdir = outdir)
+            
+            #fracs.append(float(R_A['frac_common']))
+
+            mu_k = np.sum(BIN_CENTERS * k_probs_fit)
+            var_k = np.sum((BIN_CENTERS - mu_k)**2 * k_probs_fit)
+            sigma_k = np.sqrt(var_k)
+
+            logger.info(f"sigma : {float(sigma_k)}")
+            frac_sigma = float((sigma_k**2)/(sigma_k**2 + sigma_fit**2))
+            logger.info(f"sigma_k / sigma_g: {frac_sigma}")
+            #fracs.append(float(sigma_k))
+            fracs.append(frac_sigma)
+            
+            #from IPython import embed; embed(); exit()
+            
+        return fracs
+    
     
     def plotEverything(self):
 
@@ -612,6 +756,18 @@ class Plotter:
         strip_noise_hb1_setup = {}
         strip_noise_hb1_bot_setup = {}
         strip_noise_hb1_top_setup = {}
+
+
+        num_noisy_channels_hb0_setup = {}
+        num_noisy_channels_hb1_setup = {}
+        num_dead_channels_hb0_setup = {}
+        num_dead_channels_hb1_setup = {}
+
+        num_noisy_channels_hb0_cbc_setup  = {}
+        num_noisy_channels_hb1_cbc_setup  = {}
+        num_dead_channels_hb0_cbc_setup  = {}
+        num_dead_channels_hb1_cbc_setup  = {}
+
         # common noise
         common_noise_setup = {}
         common_noise_bot_setup = {}
@@ -652,6 +808,10 @@ class Plotter:
 
         common_noise_frac_potato_hb0_cbc_setup = {}
         common_noise_frac_potato_hb1_cbc_setup = {}        
+
+        common_noise_frac_simfit_hb0_cbc_setup = {}
+        common_noise_frac_simfit_hb1_cbc_setup = {}
+
         
         allModuleIDs = []
 
@@ -682,6 +842,17 @@ class Plotter:
             strip_noise_hb1_mod = {}
             strip_noise_hb1_bot_mod = {}
             strip_noise_hb1_top_mod = {}
+
+            num_noisy_channels_hb0_mod = {}
+            num_noisy_channels_hb1_mod = {}
+            num_dead_channels_hb0_mod = {}
+            num_dead_channels_hb1_mod = {}
+            
+            num_noisy_channels_hb0_cbc_mod  = {}
+            num_noisy_channels_hb1_cbc_mod  = {}
+            num_dead_channels_hb0_cbc_mod  = {}
+            num_dead_channels_hb1_cbc_mod  = {}
+            
             # common noise
             common_noise_mod = {}
             common_noise_bot_mod = {}
@@ -723,6 +894,10 @@ class Plotter:
 
             common_noise_frac_potato_hb0_cbc_mod = {}
             common_noise_frac_potato_hb1_cbc_mod = {}
+
+            common_noise_frac_simfit_hb0_cbc_mod = {}
+            common_noise_frac_simfit_hb1_cbc_mod = {}
+            
             
             # define dict to save info per module level
             moduleIDs = []
@@ -740,6 +915,18 @@ class Plotter:
                         strip_noise_hb1_mod[martaTemp] = []                        
                         strip_noise_hb1_bot_mod[martaTemp] = []
                         strip_noise_hb1_top_mod[martaTemp] = []
+
+
+                        num_noisy_channels_hb0_mod[martaTemp]  = []
+                        num_noisy_channels_hb1_mod[martaTemp]  = []
+                        num_dead_channels_hb0_mod[martaTemp]  = []
+                        num_dead_channels_hb1_mod[martaTemp]  = []
+                        
+                        num_noisy_channels_hb0_cbc_mod[martaTemp]  = []
+                        num_noisy_channels_hb1_cbc_mod[martaTemp]  = []
+                        num_dead_channels_hb0_cbc_mod[martaTemp]  = []
+                        num_dead_channels_hb1_cbc_mod[martaTemp]  = []
+
                         # common noise
                         common_noise_mod[martaTemp] = []
                         common_noise_bot_mod[martaTemp] = []
@@ -781,6 +968,10 @@ class Plotter:
 
                         common_noise_frac_potato_hb0_cbc_mod[martaTemp] = []
                         common_noise_frac_potato_hb1_cbc_mod[martaTemp] = []
+
+                        common_noise_frac_simfit_hb0_cbc_mod[martaTemp] = []
+                        common_noise_frac_simfit_hb1_cbc_mod[martaTemp] = []
+
                         
                     noiseDict = _noiseDict["Run1"] # right now, only one run is allowed
 
@@ -918,6 +1109,33 @@ class Plotter:
                                     outdir     = _outdirCBC,
                                     colors     = ["#0B1A2F", "#152C4D", "#1F3E6C", "#29508A", "#3362A9", "#3D74C7", "#4796E6", "#61B4FF"],
                                     linestyles = 8*["-"])
+
+
+                    
+                    # ------------------------------------------------------------------ #
+                    #                Get Noisy & Dead channel fractions                  #
+                    # ------------------------------------------------------------------ #
+
+                    # per hybrid
+                    hb0_noisy_channels, hb0_dead_channels = self.__get_noisy_and_dead_channels(strip_noise_hb0)
+                    num_noisy_channels_hb0_mod[martaTemp].append(len(hb0_noisy_channels))
+                    num_dead_channels_hb0_mod[martaTemp].append(len(hb0_dead_channels))
+                                        
+                    hb1_noisy_channels, hb1_dead_channels = self.__get_noisy_and_dead_channels(strip_noise_hb1)
+                    num_noisy_channels_hb1_mod[martaTemp].append(len(hb1_noisy_channels))
+                    num_dead_channels_hb1_mod[martaTemp].append(len(hb1_dead_channels))
+                    
+                    # per CBC
+                    noisy_ch_list_hb0, dead_ch_list_hb0 = self.get_noisy_and_dead_channels_cbc(strip_noise_hb0_dict)
+                    noisy_ch_list_hb1, dead_ch_list_hb1 = self.get_noisy_and_dead_channels_cbc(strip_noise_hb1_dict)
+
+                    num_noisy_channels_hb0_cbc_mod[martaTemp].append(noisy_ch_list_hb0)
+                    num_dead_channels_hb0_cbc_mod[martaTemp].append(dead_ch_list_hb0)
+                    num_noisy_channels_hb1_cbc_mod[martaTemp].append(noisy_ch_list_hb1)
+                    num_dead_channels_hb1_cbc_mod[martaTemp].append(dead_ch_list_hb1)
+                    
+                    #from IPython import embed; embed()
+
                     
                     # Plotting hist for stripNoise per CBC : [hb1 cbc level]
                     self.hist_basic(bins       = np.linspace(2,10,80),
@@ -996,6 +1214,8 @@ class Plotter:
                                     markersize  = 2.5,
                                     capsize     = 1.5,
                                     elinewidth  = 1.0)
+
+
 
 
                     
@@ -1309,17 +1529,73 @@ class Plotter:
                             common_noise_3sigma_hb0_dict = noiseDict['common_3sigma_noise_hb0']
                             common_noise_3sigma_hb1_dict = noiseDict['common_3sigma_noise_hb1']
 
+                            cmn_res_hb0 = self.__simfit_and_analyse(common_noise_hb0_dict,
+                                                                    common_noise_3sigma_hb0_dict,
+                                                                    labels=["nHits : 0 sigma", "nHits : 3 sigma", "CMNoise"],
+                                                                    title = f"CMN_fitted_hb0_{martaTemp}_{moduleID}",
+                                                                    name = f"Plot_CommonNoiseCBC_hb0_bothSensors_{martaTemp}_{moduleID}_{datakey}",
+                                                                    outdir = _outdirCBC)
+                            common_noise_frac_simfit_hb0_cbc_mod[martaTemp].append(cmn_res_hb0)
+                            
+                            cmn_res_hb1 = self.__simfit_and_analyse(common_noise_hb1_dict,
+                                                                    common_noise_3sigma_hb1_dict,
+                                                                    labels=["nHits : 0 sigma", "nHits : 3 sigma", "CMNoise"],
+                                                                    title = f"CMN_fitted_hb1_{martaTemp}_{moduleID}",
+                                                                    name = f"Plot_CommonNoiseCBC_hb1_bothSensors_{martaTemp}_{moduleID}_{datakey}",
+                                                                    outdir = _outdirCBC)
+
+                            common_noise_frac_simfit_hb1_cbc_mod[martaTemp].append(cmn_res_hb1)
+
+                            #from IPython import embed; embed()
+                            
+                            """
                             # loop over CBCs
                             for i in range(8):
+                                fracs = []
                                 nHits_0sigma = np.array(common_noise_hb0_dict[f'CBC_{i}'])[:,0]
+                                sigmaHits_0sigma = np.array(common_noise_hb0_dict[f'CBC_{i}'])[:,1]
                                 nHits_3sigma = np.array(common_noise_3sigma_hb0_dict[f'CBC_{i}'])[:,0]
+                                sigmaHits_3sigma = np.array(common_noise_3sigma_hb0_dict[f'CBC_{i}'])[:,1]
 
                                 logger.info(f"fitting nHits for CBC_{i}")
                                 sigma_fit, k_probs_fit, res = CMNmod.fit_k_and_sigma_from_hists(nHits_0sigma,
-                                                                                                nHits_3sigma)
+                                                                                                nHits_3sigma,
+                                                                                                sigmaHits_0sigma,
+                                                                                                sigmaHits_3sigma)
                                 
-                                from IPython import embed; embed(); exit()
+                                P_A, P_B, R_A, R_B = CMNmod.predict_distributions(sigma_fit, k_probs_fit)
+                                expA = 10000 * P_A
+                                expB = 10000 * P_B
+                                #from IPython import embed; embed(); exit()
+
+                                N_BINS_K = 20
+                                K_MIN, K_MAX = -2.0, 2.0
+                                BIN_EDGES = np.linspace(K_MIN, K_MAX, N_BINS_K + 1)
+                                BIN_CENTERS = 0.5 * (BIN_EDGES[:-1] + BIN_EDGES[1:])
+                                BIN_WIDTH = BIN_EDGES[1] - BIN_EDGES[0]
+
                                 
+                                x = [ [np.arange(nHits_0sigma.shape[0]), np.arange(len(expA))] ,
+                                      [np.arange(nHits_3sigma.shape[0]), np.arange(len(expB))] ,
+                                      [BIN_CENTERS] ]
+                                y = [ [nHits_0sigma/10000, P_A] ,
+                                      [nHits_3sigma/10000, P_B] ,
+                                      [k_probs_fit] ]
+                                h3_width = BIN_WIDTH*0.9
+                                
+                                self.plot_fitted_result(x = x,
+                                                        y = y,
+                                                        w = h3_width,
+                                                        labels=["nHits : 0 sigma", "nHits : 3 sigma", "CMNoise"],
+                                                        title = f"CMN_fitted_hb0_{martaTemp}_{moduleID}_CBC{i}",
+                                                        name = f"Plot_CommonNoiseCBC_hb0_bothSensors_{martaTemp}_{moduleID}_{datakey}_CBC_{i}",
+                                                        outdir = _outdirCBC)
+
+                                from IPython import embed; embed()
+                                fracs.append(R_A['frac_common'])
+
+                            common_noise_frac_simfit_hb0_cbc_mod[martaTemp].append(fracs)
+                            """
                         else:
                             logger.warning("Skip common noise extraction by fitting nHits simultaneously for 0 & 3 sigma noise")
 
@@ -1500,8 +1776,67 @@ class Plotter:
                                 capsize     = 1.5,
                                 elinewidth  = 1.0)
 
+
+                noisy_channels_hb0_cbc = np.array(num_noisy_channels_hb0_cbc_mod[temp])
+                noisy_channels_hb1_cbc = np.array(num_noisy_channels_hb1_cbc_mod[temp])
+                noisy_channels_cbc = np.concatenate((noisy_channels_hb0_cbc,
+                                                     np.zeros_like(noisy_channels_hb0_cbc[:,:1]),
+                                                     noisy_channels_hb1_cbc), axis=1)
+
+                #from IPython import embed; embed()                
+                self.plot_heatmap(noisy_channels_cbc.astype(int),
+                                  title       = f"nNoisyCh: {temp}",
+                                  name        = f"Plot_NumNoisyCh_bothHybrids_{temp}_{datakey}",
+                                  xticklabels = moduleIDs,
+                                  yticklabels = [f"Hb0_CBC{i}" for i in range(8)] + ["SEH"] + [f"Hb1_CBC{i}" for i in range(8)],
+                                  colmap      = "coolwarm",
+                                  cb_label    = "nChannels",
+                                  #vmin        = 0.5,
+                                  #vmax        = 1.5,
+                                  outdir      = _outdirCBC)
+
+                dead_channels_hb0_cbc = np.array(num_dead_channels_hb0_cbc_mod[temp])
+                dead_channels_hb1_cbc = np.array(num_dead_channels_hb1_cbc_mod[temp])
+                dead_channels_cbc = np.concatenate((dead_channels_hb0_cbc,
+                                                     np.zeros_like(dead_channels_hb0_cbc[:,:1]),
+                                                     dead_channels_hb1_cbc), axis=1)
+
+                self.plot_heatmap(dead_channels_cbc.astype(int),
+                                  title       = f"nDeadCh: {temp}",
+                                  name        = f"Plot_NumDeadCh_bothHybrids_{temp}_{datakey}",
+                                  xticklabels = moduleIDs,
+                                  yticklabels = [f"Hb0_CBC{i}" for i in range(8)] + ["SEH"] + [f"Hb1_CBC{i}" for i in range(8)],
+                                  colmap      = "coolwarm",
+                                  cb_label    =	"nChannels",
+                                  #vmin        = 0.5,
+                                  #vmax        = 1.5,
+                                  outdir      = _outdirCBC)
+                
+                
+
                 # same for common mode noise
                 if self.testinfo.get("check_common_noise") == True:
+
+
+                    if self.testinfo.get("fit_simultaneous_common_noise") == True:
+                        cmn_frac_hb0_cbc = np.array(common_noise_frac_simfit_hb0_cbc_mod[temp])
+                        cmn_frac_hb1_cbc = np.array(common_noise_frac_simfit_hb1_cbc_mod[temp])
+                        cmn_frac_cbc = np.concatenate((cmn_frac_hb0_cbc,
+                                                       np.zeros_like(cmn_frac_hb0_cbc[:,:1]),
+                                                       cmn_frac_hb1_cbc), axis=1)
+                        
+                        self.plot_heatmap(cmn_frac_cbc,
+                                          title       = f"CMNFrac_SimFit: {temp}",
+                                          name        = f"Plot_CMNFrac_SimFit_bothHybrids_{temp}_{datakey}",
+                                          xticklabels = moduleIDs,
+                                          yticklabels = [f"Hb0_CBC{i}" for i in range(8)] + ["SEH"] + [f"Hb1_CBC{i}" for i in range(8)],
+                                          colmap      = "coolwarm",
+                                          cb_label    = "nChannels",
+                                          vmin        = 0.0,
+                                          vmax        = 1.0,
+                                          outdir      = _outdirCBC)
+                        
+                    
                     cmn_noise_hb0_mean_std, cmn_noise_hb0_sigma_std = self.__get_cmn_mean_sigma_for_plotting(np.array(common_noise_hb0_mod[temp])[:,:,0])
                     cmn_noise_hb1_mean_std, cmn_noise_hb1_sigma_std = self.__get_cmn_mean_sigma_for_plotting(np.array(common_noise_hb1_mod[temp])[:,:,0])
                     self.plot_basic(x          = np.arange(len(moduleIDs)),
@@ -1591,8 +1926,8 @@ class Plotter:
                                       xticklabels = moduleIDs,
                                       yticklabels = [f"Hb0_CBC{i}" for i in range(8)] + ["SEH"] + [f"Hb1_CBC{i}" for i in range(8)],
                                       colmap      = "coolwarm",
-                                      #vmin        = 0.5,
-                                      #vmax        = 1.5,
+                                      vmin        = 0.0,
+                                      vmax        = 0.5,
                                       outdir      = _outdirCBC)
                     
                     
@@ -1727,6 +2062,12 @@ class Plotter:
             strip_noise_hb1_setup[datakey] = strip_noise_hb1_mod
             strip_noise_hb1_bot_setup[datakey] = strip_noise_hb1_bot_mod
             strip_noise_hb1_top_setup[datakey] = strip_noise_hb1_top_mod
+
+            num_noisy_channels_hb0_setup[datakey] = num_noisy_channels_hb0_mod
+            num_noisy_channels_hb1_setup[datakey] = num_noisy_channels_hb1_mod
+            num_dead_channels_hb0_setup[datakey] = num_dead_channels_hb0_mod
+            num_dead_channels_hb1_setup[datakey] = num_dead_channels_hb1_mod
+            
             common_noise_setup[datakey] = common_noise_mod
             common_noise_bot_setup[datakey] = common_noise_bot_mod
             common_noise_top_setup[datakey] = common_noise_top_mod
@@ -1791,6 +2132,60 @@ class Plotter:
 
             for temp in cool_temps:
                 logger.info(f"Cooling temperature : {temp}")
+
+                #from IPython import embed; embed()
+                n_noisy_channels_hb0_set_1 = np.array(num_noisy_channels_hb0_setup[setup_1][temp])
+                n_noisy_channels_hb1_set_1 = np.array(num_noisy_channels_hb1_setup[setup_1][temp])
+                n_noisy_channels_hb0_set_2 = np.array(num_noisy_channels_hb0_setup[setup_2][temp])
+                n_noisy_channels_hb1_set_2 = np.array(num_noisy_channels_hb1_setup[setup_2][temp])
+                
+                self.plot_group(x           = np.arange(len(moduleIDs)),
+                                data_list   = [[np.concatenate((n_noisy_channels_hb0_set_1[:,None], np.zeros_like(n_noisy_channels_hb0_set_1)[:,None]), axis=1).tolist(),
+                                                np.concatenate((n_noisy_channels_hb1_set_1[:,None], np.zeros_like(n_noisy_channels_hb1_set_1)[:,None]), axis=1).tolist()],
+                                               [np.concatenate((n_noisy_channels_hb0_set_2[:,None], np.zeros_like(n_noisy_channels_hb0_set_2)[:,None]), axis=1).tolist(),
+                                                np.concatenate((n_noisy_channels_hb1_set_2[:,None], np.zeros_like(n_noisy_channels_hb1_set_2)[:,None]), axis=1).tolist()]],
+                                legends     = [[f"hb0_{setup_1}", f"hb1_{setup_1}"], [f"hb0_{setup_2}", f"hb1_{setup_2}"]],
+                                title       = f"n_noisy_ch ({temp})",
+                                name        = f"Plot_NoisyChannels_allModules_{temp}_compare",
+                                xticklabels = moduleIDs,
+                                #ylim        = [4.0,8.0],
+                                ylabel      = "nNoisyChannels",
+                                outdir      = self.outdir,
+                                marker      = "o",
+                                markerfacecolor=None,
+                                markersize  = 7.5,
+                                capsize     = 1.5,
+                                elinewidth  = 1.0,
+                                tick_offset = tick_offset)
+
+
+
+                n_dead_channels_hb0_set_1 = np.array(num_dead_channels_hb0_setup[setup_1][temp])
+                n_dead_channels_hb1_set_1 = np.array(num_dead_channels_hb1_setup[setup_1][temp])
+                n_dead_channels_hb0_set_2 = np.array(num_dead_channels_hb0_setup[setup_2][temp])
+                n_dead_channels_hb1_set_2 = np.array(num_dead_channels_hb1_setup[setup_2][temp])
+                
+                self.plot_group(x           = np.arange(len(moduleIDs)),
+                                data_list   = [[np.concatenate((n_dead_channels_hb0_set_1[:,None], np.zeros_like(n_dead_channels_hb0_set_1)[:,None]), axis=1).tolist(),
+                                                np.concatenate((n_dead_channels_hb1_set_1[:,None], np.zeros_like(n_dead_channels_hb1_set_1)[:,None]), axis=1).tolist()],
+                                               [np.concatenate((n_dead_channels_hb0_set_2[:,None], np.zeros_like(n_dead_channels_hb0_set_2)[:,None]), axis=1).tolist(),
+                                                np.concatenate((n_dead_channels_hb1_set_2[:,None], np.zeros_like(n_dead_channels_hb1_set_2)[:,None]), axis=1).tolist()]],
+                                legends     = [[f"hb0_{setup_1}", f"hb1_{setup_1}"], [f"hb0_{setup_2}", f"hb1_{setup_2}"]],
+                                title       = f"n_Dead_ch ({temp})",
+                                name        = f"Plot_DeadChannels_allModules_{temp}_compare",
+                                xticklabels = moduleIDs,
+                                #ylim        = [4.0,8.0],
+                                ylabel      = "nDeadChannels",
+                                outdir      = self.outdir,
+                                marker      = "o",
+                                markerfacecolor=None,
+                                markersize  = 7.5,
+                                capsize     = 1.5,
+                                elinewidth  = 1.0,
+                                tick_offset = tick_offset)
+
+                
+                
                 if self.testinfo.get("check_sensor_temperature") == True:
                     # ===>> Sensor temperature
                     sensor_temps_setup_1 = np.array(sensor_temps_setup[setup_1][temp])

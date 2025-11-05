@@ -105,13 +105,5 @@ files:
       #tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_11/MonitorDQM_2025-09-05_11-17-13.root
       tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_3/Results.root
       tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_3/MonitorDQM_2025-09-03_14-07-41.root
-  '0 deg':
-    Run1:
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_40/Results.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_40/MonitorDQM_2025-09-12_11-10-48.root
-  '-30 deg':
-    Run1:
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_32/Results.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_32/MonitorDQM_2025-09-10_13-18-25.root
 
 output: /Users/gsaha/Work/IPHC/TrackerUpgrade/Output

@@ -1,27 +1,26 @@
-maintag: IPHC_coldBox_L4
+maintag: IPHC_L5_pos2
 
 ladder: yes
 single_module_box: no
 
 n_boards: 1
 n_opticals: 12
-n_opticals_start: 0
+n_opticals_start: 6
 n_opticals_stop: 12
 
-
 moduleinfo:
-  board_0_optical_0: 2S_18_6_KIT-10019
-  board_0_optical_1: 2S_18_6_KIT-10018
-  board_0_optical_2: 2S_18_6_KIT-10017
-  board_0_optical_3: 2S_18_6_KIT-10009
-  board_0_optical_4: 2S_18_6_KIT-10013
-  board_0_optical_5: 2S_18_6_KIT-10015
-  board_0_optical_6: 2S_18_6_KIT-10011
-  board_0_optical_7: 2S_18_6_KIT-10010
-  board_0_optical_8: 2S_18_6_KIT-10008
-  board_0_optical_9: 2S_18_6_KIT-10007
-  board_0_optical_10: 2S_18_6_KIT-10020
-  board_0_optical_11: 2S_18_6_KIT-10016
+  board_0_optical_0: 2S_18_6_BRN-10011
+  board_0_optical_1: 2S_18_6_AAC-10002
+  board_0_optical_2: 2S_18_6_AAC-10038 # one screw not connected : recommended (broken bridge)
+  board_0_optical_3: 2S_18_6_AAC-10004
+  board_0_optical_4: 2S_18_6_AAC-10027
+  board_0_optical_5: 2S_18_6_AAC-10005
+  board_0_optical_6: 2S_18_6_AAC-10003
+  board_0_optical_7: 2S_18_5_NCP-10001
+  board_0_optical_8: 2S_18_5_NCP-10005
+  board_0_optical_9: 2S_18_5_NCP-10004
+  board_0_optical_10: 2S_18_6_AAC-10006
+  board_0_optical_11: 2S_18_5_NCP-10003
 
 
 # strip noise histogram names (hybrid level)
@@ -74,11 +73,16 @@ pede_hname_chip_level:
 
 
 files:
-  RoomTemp:
+  OG-0-5:
     Run1:
-      #tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_41/Results.root
-      #tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/MonitorDQM_2025-06-18_16-17-45_Run_73.root
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_209/Results.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_209/MonitorDQM_2025-07-29_08-56-20.root
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_1021/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_3/MonitorDQM_2025-09-03_14-07-41.root
+  OG-6-11:
+    Run1:
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_1022/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_3/MonitorDQM_2025-09-03_14-07-41.root
+
+
+
 
 output: /Users/gsaha/Work/IPHC/TrackerUpgrade/Output

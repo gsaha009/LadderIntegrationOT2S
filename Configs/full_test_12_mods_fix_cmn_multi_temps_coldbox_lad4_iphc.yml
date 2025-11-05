@@ -5,6 +5,8 @@ single_module_box: no
 
 n_boards: 1
 n_opticals: 12
+n_opticals_start: 0
+n_opticals_stop: 12
 
 moduleinfo:
   board_0_optical_0: 2S_18_6_KIT-10019

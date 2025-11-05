@@ -21,7 +21,7 @@ check_pedestal : yes
 
 # must be switched off for quick test results
 # optional for full test results or for results from db (always full test)
-check_common_noise : no
+check_common_noise : yes
 
 
 
@@ -30,8 +30,8 @@ check_common_noise : no
 
 
 # fitting common mode noise
-fit_common_noise : no
-fit_simultaneous_common_noise : no
+fit_common_noise : yes
+fit_simultaneous_common_noise : yes
 
 
 

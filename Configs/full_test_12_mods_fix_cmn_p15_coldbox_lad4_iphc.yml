@@ -8,7 +8,6 @@ n_opticals: 12
 n_opticals_start: 0
 n_opticals_stop: 12
 
-
 moduleinfo:
   board_0_optical_0: 2S_18_6_KIT-10019
   board_0_optical_1: 2S_18_6_KIT-10018
@@ -64,6 +63,32 @@ common_noise_hname_module_level_bottom:
 common_noise_hname_module_level_top:
  - CommonNoiseHitsTop_OccupancyDriven
 
+
+# common noise module level (SigmaNoise_3.00)
+common_noise_3sigma_hname_module_level:
+ - CommonNoiseHits_SigmaNoise_3.00
+common_noise_3sigma_hname_module_level_bottom:
+ - CommonNoiseHitsBottom_SigmaNoise_3.00
+common_noise_3sigma_hname_module_level_top:
+ - CommonNoiseHitsTop_SigmaNoise_3.00
+
+# common noise histogram names (hybrid level : SigmaNoise_3.00)
+common_noise_3sigma_hname_hybrid_level:
+ - CommonNoiseHits_SigmaNoise_3.00
+common_noise_3sigma_hname_hybrid_level_bottom:
+ - CommonNoiseHitsBottom_SigmaNoise_3.00
+common_noise_3sigma_hname_hybrid_level_top:
+ - CommonNoiseHitsTop_SigmaNoise_3.00
+
+# common noise histogram names (chip level : SigmaNoise_3.00)
+common_noise_3sigma_hname_chip_level:
+ - CommonNoiseHits_SigmaNoise_3.00
+common_noise_3sigma_hname_chip_level_bottom:
+ - CommonNoiseHitsBottom_SigmaNoise_3.00
+common_noise_3sigma_hname_chip_level_top:
+ - CommonNoiseHitsTop_SigmaNoise_3.00
+
+
 # pedestal at CBC level
 pede_hname_chip_level:
  - ChannelPedestal
@@ -71,14 +96,12 @@ pede_hname_chip_level:
 
 
 
-
-
 files:
-  RoomTemp:
+  '+15 deg':
     Run1:
-      #tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_41/Results.root
-      #tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/MonitorDQM_2025-06-18_16-17-45_Run_73.root
-      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_209/Results.root
-      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_209/MonitorDQM_2025-07-29_08-56-20.root
+      #tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_0/Results.root
+      #tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_0/MonitorDQM_2025-09-05_11-16-55.root
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_2/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_2/MonitorDQM_2025-09-03_09-52-14.root
 
 output: /Users/gsaha/Work/IPHC/TrackerUpgrade/Output
