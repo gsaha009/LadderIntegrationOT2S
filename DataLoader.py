@@ -335,7 +335,7 @@ class DataLoader:
         main_noise_dict = {}
 
         from_db = False
-        temperature_key = 'RoomTemp'
+        temperature_key = '+15 deg'
 
         for mod_key, test_iter_dict in root_file_info.items():
             logger.info(f"Module : {mod_key}")

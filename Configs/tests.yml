@@ -30,8 +30,8 @@ check_common_noise : yes
 
 
 # fitting common mode noise
-fit_common_noise : yes
-fit_simultaneous_common_noise : yes
+fit_common_noise : no
+fit_simultaneous_common_noise : no
 
 
 
@@ -50,7 +50,7 @@ potato_like_grading : no
 
 
 # check sensor temperature
-check_sensor_temperature: yes
+check_sensor_temperature: no
 
 
 

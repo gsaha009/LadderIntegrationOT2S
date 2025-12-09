@@ -1,0 +1,142 @@
+maintag: IPHC_Kira_L7
+
+ladder: no
+single_module_box: yes
+
+n_boards: 1
+n_opticals: 1
+n_opticals_start: 0
+n_opticals_stop: 1
+
+
+# strip noise histogram names (hybrid level)
+strip_noise_hname_hybrid_level:
+  - StripChannelNoise
+  - HybridStripNoiseDistribution
+strip_noise_hname_hybrid_level_bottom:
+  - StripChannelNoiseBottom
+  - HybridNoiseBottomDistribution 
+strip_noise_hname_hybrid_level_top:
+  - StripChannelNoiseTop
+  - HybridNoiseTopDistribution
+
+# strip noise histogram names (chip level)
+strip_noise_hname_chip_level:
+  - ChannelNoise
+  - ChannelNoiseDistribution
+strip_noise_hname_chip_level_bottom:
+  - ChannelNoiseBottom
+  - ChannelNoiseBottomDistribution
+strip_noise_hname_chip_level_top:
+  - ChannelNoiseTop
+  - ChannelNoiseTopDistribution
+
+# common noise histogram names (hybrid level)
+common_noise_hname_hybrid_level:
+ - CommonNoiseHits_OccupancyDriven
+common_noise_hname_hybrid_level_bottom:
+ - CommonNoiseHitsBottom_OccupancyDriven
+common_noise_hname_hybrid_level_top:
+ - CommonNoiseHitsTop_OccupancyDriven
+
+# common noise histogram names (chip level)
+common_noise_hname_chip_level:
+ - CommonNoiseHits_OccupancyDriven
+common_noise_hname_chip_level_bottom:
+ - CommonNoiseHitsBottom_OccupancyDriven
+common_noise_hname_chip_level_top:
+ - CommonNoiseHitsTop_OccupancyDriven
+
+# common noise module level
+common_noise_hname_module_level:
+ - CommonNoiseHits_OccupancyDriven
+common_noise_hname_module_level_bottom:
+ - CommonNoiseHitsBottom_OccupancyDriven
+common_noise_hname_module_level_top:
+ - CommonNoiseHitsTop_OccupancyDriven
+
+
+# common noise module level (SigmaNoise_3.00)
+common_noise_3sigma_hname_module_level:
+ - CommonNoiseHits_SigmaNoise_3.00
+common_noise_3sigma_hname_module_level_bottom:
+ - CommonNoiseHitsBottom_SigmaNoise_3.00
+common_noise_3sigma_hname_module_level_top:
+ - CommonNoiseHitsTop_SigmaNoise_3.00
+
+# common noise histogram names (hybrid level : SigmaNoise_3.00)
+common_noise_3sigma_hname_hybrid_level:
+ - CommonNoiseHits_SigmaNoise_3.00
+common_noise_3sigma_hname_hybrid_level_bottom:
+ - CommonNoiseHitsBottom_SigmaNoise_3.00
+common_noise_3sigma_hname_hybrid_level_top:
+ - CommonNoiseHitsTop_SigmaNoise_3.00
+
+# common noise histogram names (chip level : SigmaNoise_3.00)
+common_noise_3sigma_hname_chip_level:
+ - CommonNoiseHits_SigmaNoise_3.00
+common_noise_3sigma_hname_chip_level_bottom:
+ - CommonNoiseHitsBottom_SigmaNoise_3.00
+common_noise_3sigma_hname_chip_level_top:
+ - CommonNoiseHitsTop_SigmaNoise_3.00
+
+
+# pedestal at CBC level
+pede_hname_chip_level:
+ - ChannelPedestal
+ - ChannelPedestalDistribution
+
+
+
+files:
+  2S_18_5_NIS-10018:
+    Run1:
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_38_2S_18_5_NIS-10018/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_38_2S_18_5_NIS-10018/MonitorDQM_2025-11-03_14-29-20.root
+  2S_18_6_AAC-10014:
+    Run1:
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_33_2S_18_6_AAC-10014/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_33_2S_18_6_AAC-10014/MonitorDQM_2025-10-02_12-15-24.root
+  2S_18_6_AAC-10013:
+    Run1:
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_30_2S_18_6_AAC-10013/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_30_2S_18_6_AAC-10013/MonitorDQM_2025-10-02_10-35-14.root
+  2S_18_6_AAC-10012:
+    Run1:
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_29_2S_18_6_AAC-10012/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_29_2S_18_6_AAC-10012/MonitorDQM_2025-10-02_09-42-51.root
+  2S_18_6_AAC-10011:
+    Run1:
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_27_2S_18_6_AAC-10011/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_27_2S_18_6_AAC-10011/MonitorDQM_2025-10-01_16-45-14.root
+  2S_18_6_AAC-10010:
+    Run1:
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_26_2S_18_6_AAC-10010/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_26_2S_18_6_AAC-10010/MonitorDQM_2025-10-01_16-16-23.root
+  2S_18_6_AAC-10009:
+    Run1:
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_25_2S_18_6_AAC-10009/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_25_2S_18_6_AAC-10009/MonitorDQM_2025-10-01_15-44-28.root
+  2S_18_6_AAC-10007:
+    Run1:
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_24_2S_18_6_AAC-10007/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_24_2S_18_6_AAC-10007/MonitorDQM_2025-10-01_15-12-58.root
+  2S_18_6_BRN-10094:
+    Run1:
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_34_2S_18_6_BRN-10094/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_34_2S_18_6_BRN-10094/MonitorDQM_2025-10-30_11-52-17.root
+  2S_18_6_BRN-10042:
+    Run1:
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_31_2S_18_6_BRN-10042/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_31_2S_18_6_BRN-10042/MonitorDQM_2025-10-30_09-54-51.root
+  2S_18_6_BRN-10044:
+    Run1:
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_32_2S_18_6_BRN-10044/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_32_2S_18_6_BRN-10044/MonitorDQM_2025-10-30_10-41-15.root
+  2S_18_6_BRN-10081:
+    Run1:
+      tfile_main: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_33_2S_18_6_BRN-10081/Results.root
+      tfile_dqm: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/ModuleTest_33_2S_18_6_BRN-10081/MonitorDQM_2025-10-30_11-14-08.root
+
+
+output: /Users/gsaha/Work/IPHC/TrackerUpgrade/Output
