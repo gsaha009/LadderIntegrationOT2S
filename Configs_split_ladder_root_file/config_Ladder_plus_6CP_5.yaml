@@ -1,14 +1,15 @@
 # some basic info
 
-INPUT_FILE    : "/Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_3/Results.root"
-OUTPUT_PATH   : "/Users/gsaha/Work/IPHC/TrackerUpgrade/Output/Split_output"
+TEST_TYPE : 2SfullTest # 2SquickTest
+
+INPUT_FILE    : /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_3/Results.root
+OUTPUT_PATH   : /Users/gsaha/Work/IPHC/TrackerUpgrade/Output/Split_output
 
 # Ladder Info
-LADDER_NO   : 5
-LADDER_POS  : "Zplus" # "Zminus"
+LADDER   : plus_6CP_5
 
 # Temperature
-COOLING_TEMP : "+15deg" # "0deg", "-30deg"
+COOLING_TEMP : "plus_15_deg" # "zero_deg", "minus_30_deg"
 
 # Module positions
 MODULE_POS:
