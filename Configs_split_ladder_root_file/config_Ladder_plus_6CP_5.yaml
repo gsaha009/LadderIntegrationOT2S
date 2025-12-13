@@ -1,17 +1,22 @@
-# some basic info
+# --- CONFIG --- #
+# As usual, do not use TAB #
 
-TEST_TYPE : 2SfullTest # 2SquickTest
-
+# Ph2ACF output contains more than one OpticalGroup
 INPUT_FILE    : /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_3/Results.root
+
+# Where to save the output ROOT files per OpticalGroup
 OUTPUT_PATH   : /Users/gsaha/Work/IPHC/TrackerUpgrade/Output/Split_output
 
-# Ladder Info
+# Ladder Information (Same as DCA)
+# e.g. plus_<nCoolingPoints>CP_<#Ladder>
 LADDER   : plus_6CP_5
 
-# Temperature
-COOLING_TEMP : "plus_15_deg" # "zero_deg", "minus_30_deg"
+# CO2 cooling temperature
+# e.g. plus_15_deg / zero_deg / minus_30_deg
+COOLING_TEMP : plus_15_deg
 
 # Module positions
+# BE CAREFUL! These Module IDs	will be	added as ModuleName inside the ROOT files for each Optical Group
 MODULE_POS:
   OpticalGroup_0  : 2S_18_6_BRN-10011
   OpticalGroup_1  : 2S_18_6_AAC-10002

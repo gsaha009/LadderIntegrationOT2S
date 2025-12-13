@@ -904,6 +904,14 @@ class Plotter:
             for moduleID, moduleDict in dataval.items():
                 logger.info(f"Module ID : {moduleID}")
                 moduleIDs.append(moduleID)
+
+                _outdirMod = f"{_outdir}/{moduleID}"
+                if not os.path.exists(_outdirMod): os.mkdir(_outdirMod)
+                
+                _outdirModCBC = f"{_outdirMod}/CBCLevel"
+                if not os.path.exists(_outdirModCBC): os.mkdir(_outdirModCBC)
+
+                
                 for martaTemp, _noiseDict in moduleDict.items():
                     logger.info(f"Temperature : {martaTemp}")
                     if martaTemp not in strip_noise_hb0_bot_mod.keys():
@@ -1011,7 +1019,7 @@ class Plotter:
                                         linewidth  = 1.2,
                                         markersize = 2.5,
                                         #ylim       = [20.0,27.0],
-                                        outdir     = _outdir,
+                                        outdir     = _outdirMod,
                                         nticks     = 40 if time_stamps.shape[0] > 40 else None)
 
                     else:
@@ -1050,7 +1058,7 @@ class Plotter:
                                     xlabel     = "Channel",
                                     ylabel     = "Noise [VcTh]",
                                     ylim       = [0.0,12.0],
-                                    outdir     = _outdir)
+                                    outdir     = _outdirMod)
 
                     
                     # Plotting strip noise channel wise : [hb0_bot, hb1_bot]
@@ -1062,7 +1070,7 @@ class Plotter:
                                     xlabel     = "Channel",
                                     ylabel     = "Noise [VcTh]",
                                     ylim       = [0.0,12.0],
-                                    outdir     = _outdir)
+                                    outdir     = _outdirMod)
 
                     # Plotting strip noise channel wise : [hb0_top, hb1_top]
                     self.plot_basic(x          = np.arange(len(strip_noise_hb0_top)),
@@ -1073,7 +1081,7 @@ class Plotter:
                                     xlabel     = "Channel",
                                     ylabel     = "Noise [VcTh]",
                                     ylim       = [0.0,12.0],
-                                    outdir     = _outdir)
+                                    outdir     = _outdirMod)
 
 
                     # Plotting hist for stripNoise : [hb0_bot, hb0_top, hb1_bot, hb1_top]
@@ -1085,7 +1093,7 @@ class Plotter:
                                     xlabel     = "Noise [VcTh]",
                                     ylabel     = "Entries",
                                     linewidth  = 2,
-                                    outdir     = _outdir,
+                                    outdir     = _outdirMod,
                                     colors     = ["#165a86","#cc660b","#165a86","#cc660b"],
                                     linestyles = ["-","-","--","--"])
                     
@@ -1106,7 +1114,7 @@ class Plotter:
                                     xlabel     = "Noise [VcTh]",
                                     ylabel     = "Entries",
                                     linewidth  = 1.2,
-                                    outdir     = _outdirCBC,
+                                    outdir     = _outdirModCBC,
                                     colors     = ["#0B1A2F", "#152C4D", "#1F3E6C", "#29508A", "#3362A9", "#3D74C7", "#4796E6", "#61B4FF"],
                                     linestyles = 8*["-"])
 
@@ -1153,7 +1161,7 @@ class Plotter:
                                     xlabel     = "Noise [VcTh]",
                                     ylabel     = "Entries",
                                     linewidth  = 1.2,
-                                    outdir     = _outdirCBC,
+                                    outdir     = _outdirModCBC,
                                     colors     = ["#2E0000", "#4A0A0A", "#661515", "#821F1F", "#9E2A2A", "#BA3535", "#D65050", "#F26B6B"],
                                     linestyles = 8*["-"])
 
@@ -1172,7 +1180,7 @@ class Plotter:
                                     xticklabels = [f"CBC_{i}" for i in range(8)],
                                     ylim        = [2.0,10.0],
                                     ylabel      = "Noise [VcTh]",
-                                    outdir      = _outdirCBC,
+                                    outdir      = _outdirModCBC,
                                     marker      = "o",
                                     markersize  = 2.5,
                                     capsize     = 1.5,
@@ -1190,7 +1198,7 @@ class Plotter:
                                     xticklabels = [f"CBC_{i}" for i in range(8)],
                                     ylim        = [2.0,10.0],
                                     ylabel      = "Noise [VcTh]",
-                                    outdir      = _outdirCBC,
+                                    outdir      = _outdirModCBC,
                                     marker      = "o",
                                     markersize  = 2.5,
                                     capsize     = 1.5,
@@ -1209,7 +1217,7 @@ class Plotter:
                                     xticklabels = [f"CBC_{i}" for i in range(8)],
                                     ylim        = [2.0,10.0],
                                     ylabel      = "Noise [VcTh]",
-                                    outdir      = _outdirCBC,
+                                    outdir      = _outdirModCBC,
                                     marker      = "o",
                                     markersize  = 2.5,
                                     capsize     = 1.5,
@@ -1268,7 +1276,7 @@ class Plotter:
                                         xlabel     = "Number of hits",
                                         ylabel     = "Number of events",
                                         #ylim       = [0.0,12.0],
-                                        outdir     = _outdir,
+                                        outdir     = _outdirMod,
                                         linewidth  = 0.0,
                                         markersize = 0.5,
                                         capsize    = 0.0,
@@ -1289,7 +1297,7 @@ class Plotter:
                                         xlabel     = "Number of hits",
                                         ylabel     = "Number of events",
                                         #ylim       = [0.0,12.0],
-                                        outdir     = _outdir,
+                                        outdir     = _outdirMod,
                                         linewidth  = 0.0,
                                         markersize = 0.5,
                                         capsize    = 0.0,
@@ -1310,7 +1318,7 @@ class Plotter:
                                         xlabel     = "Number of hits",
                                         ylabel     = "Number of events",
                                         #ylim       = [0.0,12.0],
-                                        outdir     = _outdir,
+                                        outdir     = _outdirMod,
                                         linewidth  = 0.0,
                                         markersize = 0.5,
                                         capsize    = 0.0,
@@ -1336,7 +1344,7 @@ class Plotter:
                                         capsize    = 0.0,
                                         elinewidth = 0.05,
                                         fitlinewidth = 2.0,
-                                        outdir     = _outdir,
+                                        outdir     = _outdirMod,
                                         fit        = self.testinfo.get("fit_common_noise"),
                                         #fitmodel   = self.__gauss_model,
                                         #fitfunc    = self.__gauss_fit
@@ -1350,7 +1358,7 @@ class Plotter:
                                         xlabel     = "Number of hits",
                                         ylabel     = "Number of events",
                                         #ylim       = [0.0,12.0],
-                                        outdir     = _outdir,
+                                        outdir     = _outdirMod,
                                         linewidth  = 0.0,
                                         markersize = 0.5,
                                         capsize    = 0.0,
@@ -1377,7 +1385,7 @@ class Plotter:
                                         name       = f"Plot_CommonNoiseDistributionCBC_Hybrid0_bothSensors_{martaTemp}_{moduleID}_{datakey}",
                                         xlabel     = "Number of hits",
                                         ylabel     = "Number of events",
-                                        outdir     = _outdirCBC,
+                                        outdir     = _outdirModCBC,
                                         colors     = ["#0B1A2F", "#152C4D", "#1F3E6C", "#29508A", "#3362A9", "#3D74C7", "#4796E6", "#61B4FF"],
                                         linestyles = 8*["-"],
                                         linewidth  = 1.0,
@@ -1406,7 +1414,7 @@ class Plotter:
                                         name       = f"Plot_CommonNoiseDistributionCBC_Hybrid1_bothSensors_{martaTemp}_{moduleID}_{datakey}",
                                         xlabel     = "Number of hits",
                                         ylabel     = "Number of events",
-                                        outdir     = _outdirCBC,
+                                        outdir     = _outdirModCBC,
                                         colors     = ["#2E0000", "#4A0A0A", "#661515", "#821F1F", "#9E2A2A", "#BA3535", "#D65050", "#F26B6B"],
                                         linestyles = 8*["-"],
                                         linewidth  = 1.0,
@@ -1435,7 +1443,7 @@ class Plotter:
                                         xticklabels = [f"CBC_{i}" for i in range(8)],
                                         ylim        = [50, 200],
                                         ylabel      = "Common Noise",
-                                        outdir      = _outdirCBC,
+                                        outdir      = _outdirModCBC,
                                         marker      = "o",
                                         markersize  = 2.5,
                                         capsize     = 1.5,
@@ -1454,7 +1462,7 @@ class Plotter:
                                         xticklabels = [f"CBC_{i}" for i in range(8)],
                                         ylim        = [20, 100],
                                         ylabel      = "Common Noise",
-                                        outdir      = _outdirCBC,
+                                        outdir      = _outdirModCBC,
                                         marker      = "o",
                                         markersize  = 2.5,
                                         capsize     = 1.5,
@@ -1534,7 +1542,7 @@ class Plotter:
                                                                     labels=["nHits : 0 sigma", "nHits : 3 sigma", "CMNoise"],
                                                                     title = f"CMN_fitted_hb0_{martaTemp}_{moduleID}",
                                                                     name = f"Plot_CommonNoiseCBC_hb0_bothSensors_{martaTemp}_{moduleID}_{datakey}",
-                                                                    outdir = _outdirCBC)
+                                                                    outdir = _outdirModCBC)
                             common_noise_frac_simfit_hb0_cbc_mod[martaTemp].append(cmn_res_hb0)
                             
                             cmn_res_hb1 = self.__simfit_and_analyse(common_noise_hb1_dict,
@@ -1542,7 +1550,7 @@ class Plotter:
                                                                     labels=["nHits : 0 sigma", "nHits : 3 sigma", "CMNoise"],
                                                                     title = f"CMN_fitted_hb1_{martaTemp}_{moduleID}",
                                                                     name = f"Plot_CommonNoiseCBC_hb1_bothSensors_{martaTemp}_{moduleID}_{datakey}",
-                                                                    outdir = _outdirCBC)
+                                                                    outdir = _outdirModCBC)
 
                             common_noise_frac_simfit_hb1_cbc_mod[martaTemp].append(cmn_res_hb1)
 
@@ -1619,7 +1627,7 @@ class Plotter:
                                         xlabel     = "Channel",
                                         ylabel     = "Pedestal [VcTh]",
                                         ylim       = [595.0,605.0],
-                                        outdir     = _outdir)
+                                        outdir     = _outdirMod)
                     
                         self.hist_basic(bins       = np.linspace(590,610,80),
                                         data_list  = [pede_hb0_dict['CBC_0'],
@@ -1636,7 +1644,7 @@ class Plotter:
                                         xlabel     = "Pedestal [VcTh]",
                                         ylabel     = "Entries",
                                         linewidth  = 1.2,
-                                        outdir     = _outdirCBC,
+                                        outdir     = _outdirModCBC,
                                         colors     = ["#0B1A2F", "#152C4D", "#1F3E6C", "#29508A", "#3362A9", "#3D74C7", "#4796E6", "#61B4FF"],
                                         linestyles = 8*["-"])
                         self.hist_basic(bins       = np.linspace(590,610,80),
@@ -1654,7 +1662,7 @@ class Plotter:
                                         xlabel     = "Pedestal [VcTh]",
                                         ylabel     = "Entries",
                                         linewidth  = 1.2,
-                                        outdir     = _outdirCBC,
+                                        outdir     = _outdirModCBC,
                                         colors     = ["#2E0000", "#4A0A0A", "#661515", "#821F1F", "#9E2A2A", "#BA3535", "#D65050", "#F26B6B"],
                                         linestyles = 8*["-"])
 
@@ -1674,7 +1682,7 @@ class Plotter:
                                         xticklabels = [f"CBC_{i}" for i in range(8)],
                                         ylim        = [595, 605],
                                         ylabel      = "Pedestal [VcTh]",
-                                        outdir      = _outdirCBC,
+                                        outdir      = _outdirModCBC,
                                         marker      = "o",
                                         markersize  = 2.5,
                                         capsize     = 1.5,

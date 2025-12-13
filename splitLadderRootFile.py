@@ -2,7 +2,7 @@
 # Author : Gourab Saha, IPHC
 
 # How to Run:
-# python main.py <cfg_file.yaml>
+# python main.py Configs_split_ladder_root_file/file.yaml
 
 
 import os
@@ -147,6 +147,8 @@ def main():
 
     print(f"Real time taken : {round(REAL_STOP - REAL_START, 2)} seconds")
     print(f"CPU time taken  : {round(CPU_STOP - CPU_START, 2)} seconds")
+
+
 
     
 if __name__ == "__main__":
