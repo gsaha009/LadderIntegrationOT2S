@@ -1,3 +1,6 @@
 [submodule "modules/2SLadderCMNAna"]
 	path = modules/2SLadderCMNAna
 	url = https://github.com/gsaha009/2SLadderCMNAna.git
+[submodule "modules/EventContainer"]
+	path = modules/EventContainer
+	url = https://gitlab.cern.ch/gsaha/eventcontainer.git
