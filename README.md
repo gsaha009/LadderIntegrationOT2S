@@ -67,3 +67,11 @@ git clone https://github.com/gsaha009/LadderIntegrationOT2S.git
 python main.py -cs Configs/bla.yaml Configs/foo.yaml -t <Output_Tag>
 # max 2 configs can be used if `compare` switch is True in `tests.yaml`, or one config if it is False
 ```
+
+
+## SubModules
+
+| Path | Repository | Purpose |
+|------|------------|---------|
+| `modules/2SLadderCMNAna` | [GitHub Repo](https://github.com/gsaha009/2SLadderCMNAna) | CMNoise fitter |
+| `modules/EventContainer` | [GitLab Repo](https://gitlab.cern.ch/gsaha/eventcontainer.git) | Read OTPhysics Root file |
