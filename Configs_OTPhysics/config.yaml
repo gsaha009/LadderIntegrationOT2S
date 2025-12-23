@@ -1,0 +1,7 @@
+# config for OT Physics
+
+# Input file
+INPUT_FILE: "/afs/cern.ch/work/g/gsaha/public/IPHC/Work/TrackerUpgrade/flat.root"
+
+# Outdir
+OUTPUT: "/afs/cern.ch/work/g/gsaha/public/IPHC/Work/TrackerUpgrade/OTPhysicsOutput"
