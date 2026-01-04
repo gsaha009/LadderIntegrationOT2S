@@ -4,4 +4,4 @@
 INPUT_FILE: "/afs/cern.ch/work/g/gsaha/public/IPHC/Work/TrackerUpgrade/flat.root"
 
 # Outdir
-OUTPUT: "/afs/cern.ch/work/g/gsaha/public/IPHC/Work/TrackerUpgrade/OTPhysicsOutput"
+OUTPUT: "/eos/project/i/iphctau/public/gsaha/TrackerUpgrade/OTPhysicsOuput/Output"
