@@ -2,9 +2,14 @@ import uproot
 import awkward as ak
 import logging
 import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
 import mplhep as hep
 import numpy as np
 hep.style.use("CMS")
+
+from Fitter import Fitter
 
 logger = logging.getLogger('main')
 
@@ -96,6 +101,132 @@ def plot_basic_settings():
             "linestyles": ["-","--","-.",":","(0, (3, 1))", "(0, (3, 1, 1, 1))","(0, (5, 5))","(0, (1, 1))","(0, (6, 2))","(0, (4, 2, 1, 2))"]}
 
 
+def plot_basic(x = None, data_dict = None,
+               title = 'default', name = 'default',
+               **kwargs):
+    basics = plot_basic_settings()
+
+    xticklabels = kwargs.get("xticklabels", None)
+    yticklabels = kwargs.get("yticklabels", None)
+    outdir = kwargs.get("outdir", "../Output")
+    ylim = kwargs.get("ylim", basics["ylim"])
+    xlim = kwargs.get("xlim", basics["xlim"])
+    linewidth = kwargs.get("linewidth", basics["linewidth"]) 
+    xlabel = kwargs.get("xlabel", "var")
+    ylabel = kwargs.get("ylabel", "var")
+    marker = kwargs.get("marker", basics["marker"])
+    markersize = kwargs.get("markersize", basics["markersize"])
+    markerfacecolor = kwargs.get("markerfacecolor", None)
+    markeredgewidth = kwargs.get("markeredgewidth", basics['markeredgewidth'])
+    capsize = kwargs.get("capsize", basics["capsize"])
+    elinewidth = kwargs.get("elinewidth", 0.5)
+    dofit = kwargs.get("fit", False)
+    fitfunc = kwargs.get("fitfunc", None)
+    fitmodel = kwargs.get("fitmodel", None)
+    dograd = kwargs.get("dograd", False)
+    colors = kwargs.get("colors", basics["colors"])
+    markerstyles = kwargs.get("markerstyles", basics["markerstyles"])
+    linestyles = kwargs.get("linestyles", basics["linestyles"])
+    fitlinewidth = kwargs.get("fitlinewidth", 1.2)
+    mean_init = kwargs.get("mean_init", 500.0)
+    sigma_init = kwargs.get("sigma_init", 100.0)
+    nticks = kwargs.get("nticks", None)
+    tick_offset = kwargs.get("tick_offset", 0.1)
+    legend_labels = kwargs.get("legs", None)
+    
+    fig, ax = plt.subplots(figsize=basics["size"])
+    hep.cms.text(basics["heplogo"], loc=basics["logoloc"]) # CMS
+
+
+    legend_handles = []
+    x = np.array(x)
+    for i,(key,data) in enumerate(data_dict.items()):
+        data = np.array(data)
+        _val = data[:,0]
+        err  = data[:,1]
+        val  = np.gradient(_val) if dograd else _val 
+        ax.errorbar(x,
+                    val,
+                    yerr=err,
+                    fmt = markerstyles[i],
+                    elinewidth=elinewidth,
+                    linewidth=linewidth,
+                    linestyle='-',
+                    #marker=marker,
+                    markersize=markersize,
+                    markerfacecolor=colors[i] if markerfacecolor is not None else 'none',
+                    markeredgewidth = markeredgewidth,
+                    color=colors[i],
+                    label=key if legend_labels == None else legend_labels[i],
+                    capsize=capsize)
+
+        if dofit:
+            #mask = val > 0.0
+            #x_filtered = x[mask]
+            #val_filtered = val[mask]
+            #err_filtered = err[mask]
+
+            fitobj = Fitter(x, val, err, modeltype=fitmodel)
+            result = fitobj.result
+            #from IPython import embed; embed(); exit()
+                
+
+            if result is not None:
+                fit_val, fit_label_text = result
+                ax.plot(x, fit_val, color=colors[i], linewidth=fitlinewidth)
+                label_text = f"{key}: {fit_label_text}"
+
+                legend_handles.append(
+                    Line2D([0], [0], color=colors[i], linewidth=fitlinewidth, label=label_text)
+                )
+
+
+
+    if dofit:
+        ax.legend(
+            handles=legend_handles,
+            frameon=False,
+            fontsize=8.0,
+            ncol=2,
+            loc="upper left",
+            #bbox_to_anchor=(1, 1)
+        )
+    else:
+        ax.legend(fontsize=12, framealpha=1, facecolor='white')
+
+    
+    ax.grid(True, color='gray', linestyle='--', linewidth=0.3, zorder=0)        
+
+    if xticklabels:
+        if nticks is not None:
+            tick_count = nticks
+            tick_locs = np.linspace(0, x.shape[0]-1, tick_count, dtype=int)
+            tick_labels = [xticklabels[i] for i in tick_locs]
+            ax.set_xticks(tick_locs)
+            ax.set_xticklabels(tick_labels, rotation=90, ha="right", rotation_mode="anchor", fontsize=13)
+        else:                
+            ticks_ = [x-tick_offset for x in list(range(len(xticklabels)))]
+            ax.set_xticks(ticks_)
+            ax.set_xticklabels(xticklabels, rotation=90, ha='right', rotation_mode='anchor', fontsize=13)
+    else:
+        ax.set_xlabel(xlabel)
+
+
+    ax.set_ylabel(ylabel)
+
+    if ylim:
+        ax.set_ylim(ylim[0],ylim[1])
+    if xlim:
+        ax.set_xlim(xlim[0],xlim[1])
+        
+    ax.set_title(f"{title}", fontsize=14, loc='right')
+    
+    plt.tight_layout()
+    fig.savefig(f"{outdir}/{name}.png", dpi=300, bbox_inches="tight")
+    logger.info(f"Plot saved : {outdir}/{name}.png")
+    plt.close()
+
+
 
 def plot_heatmap(data = None, title = 'default', name = 'default', **kwargs):
     basics = plot_basic_settings()
@@ -138,3 +269,5 @@ def plot_heatmap(data = None, title = 'default', name = 'default', **kwargs):
     logger.info(f"Plot saved : {outdir}/{name}.png")
     plt.close()
     
+
+
