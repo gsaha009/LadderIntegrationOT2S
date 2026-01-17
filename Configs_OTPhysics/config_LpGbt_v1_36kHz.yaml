@@ -1,0 +1,10 @@
+# config for OT Physics
+
+# Input file
+INPUT_FILE: "/eos/project/i/iphctau/public/gsaha/TrackerUpgrade/OTPhysicsPh2acfFlatRootFiles/run_000077_Board000_Flat.root"
+
+# Outdir
+OUTPUT: "/eos/project/i/iphctau/public/gsaha/TrackerUpgrade/OTPhysicsOuput/Output"
+
+# signal freq
+FS: 36000 #Hz
