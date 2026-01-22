@@ -35,6 +35,7 @@ fit_simultaneous_common_noise : no
 
 
 
+check_extra : yes
 
 
 
@@ -75,6 +76,8 @@ sensor_temperature_vs_time_stamps:
 
 # comparing different setup
 compare_two_setup: yes
+
+
 
 
 
