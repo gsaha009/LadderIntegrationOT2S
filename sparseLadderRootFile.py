@@ -77,7 +77,7 @@ def main(args):
     outfile_ladder = None
     outfile_ladder_name = f"Results__{test_type}__Ladder_{ladID}__CO2_{coolTemp}.root"
 
-    print(f"💾 ==> Copying file content from infile to an another file : {outfile_ladder_name}")
+    print(f"💾 ==> Copying file content from infile to an another file : {outfile_ladder_name}\n")
     outfile_ladder = ROOT.TFile.Open(f"{OUTDIR}/{outfile_ladder_name}", "RECREATE")
     det_out_ladder = outfile_ladder.mkdir("Detector")
     copy_dir(infile.Get("Detector"), det_out_ladder)
@@ -100,17 +100,36 @@ def main(args):
     print(f"Cooling Temp    : {coolTemp}\n")
 
 
-    # Loop over keys under Detector/Board_0 to find the OpticalGroup TDirectories
-    for key in outfile_ladder.Get("Detector/Board_0").GetListOfKeys():
-        name = key.GetName()
-        obj  = key.ReadObj()
+    OGs = args.opticalgroup
+    if OGs == [-1]:
+        OGs = list(range(12))
 
-        OG = name.split('_')[-1]
+    #OGs = [f"OpticalGroup_{idx}" for idx in OGs]
+    print(f"OpticalGroup indices : {OGs}\n\n")
+
+
+    board_dir = outfile_ladder.Get("Detector/Board_0")
+    # Loop over the Optical Groups
+    for OG in OGs:
+        name = f'OpticalGroup_{OG}'
+        obj = board_dir.Get(name)
         
+    
+        # Loop over keys under Detector/Board_0 to find the OpticalGroup TDirectories
+        #for key in outfile_ladder.Get("Detector/Board_0").GetListOfKeys():
+        if not obj:
+            print(f"⚠️  OpticalGroup_{OG} not found in Board_0")
         if not isinstance(obj, ROOT.TDirectory):
+            print(f"⚠️  OpticalGroup_{OG} is not a TDirectory")
             continue
-        if not "OpticalGroup" in name:
-            continue
+        
+        #name = key.GetName()
+        #obj  = key.ReadObj()
+
+        #OG = name.split('_')[-1]
+        
+        #if not "OpticalGroup" in name:
+        #    continue
 
         
         modID = MODULE_POS[name]
@@ -177,6 +196,15 @@ if __name__ == "__main__":
                         action      = "store_true",
                         default     = False,
                         help="Split the ROOT file?")
+
+    parser.add_argument("-og",
+                        "--opticalgroup",
+                        type=int,
+                        nargs="+",
+                        default=[-1],
+                        required=False,
+                        help="list of OGs; use -1 to select all (0–11)")
+    
 
     args= parser.parse_args()
     

@@ -23,6 +23,17 @@ import logging
 logger = logging.getLogger('main')
 
 
+import ROOT
+#from CMSStyle import setTDRStyle,setCMSText
+ROOT.gROOT.SetBatch(True)
+import CMS_lumi, tdrstyle
+
+tdrstyle.setTDRStyle()
+CMS_lumi.writeExtraText = 1
+CMS_lumi.extraText = "Preliminary"
+
+
+
 
 class Plotter:
     def __init__(self,
@@ -744,7 +755,45 @@ class Plotter:
             #from IPython import embed; embed(); exit()
             
         return fracs
-    
+
+
+    def plot_ROOT_2Dhist(self, name="default", title="default",
+                         hist=None, **kwargs):
+
+        outdir = kwargs.get("outdir", "../Output")
+        
+        
+        #ROOT.gROOT.LoadMacro("tdrstyle.C")
+        #setTDRStyle()
+        #setCMSText()
+        
+        #ROOT.gROOT.LoadMacro("CMS_lumi.C")
+
+        ROOT.gStyle.SetPalette(ROOT.kViridis)
+
+        CANVAS_W = 800
+        CANVAS_H = 700
+
+        c = ROOT.TCanvas(f"c_{name}", name, CANVAS_W, CANVAS_H)
+        
+        # CMS margins (important!)
+        c.SetLeftMargin(0.12)
+        c.SetRightMargin(0.16)   # space for COLZ
+        c.SetBottomMargin(0.12)
+        c.SetTopMargin(0.08)
+        
+        #hist.SetTitle("")           # CMS uses external labels
+        hist.Draw("COLZ")
+
+        # Add CMS lumi/label on top-left
+        #ROOT.CMS_lumi.writeExtraText = True
+        #ROOT.CMS_lumi.extraText = "Private"
+
+        #c.Update()
+        c.SaveAs(f"{outdir}/{name}.png")
+        c.Close()
+        
+        
     
     def plotEverything(self):
 
@@ -998,6 +1047,34 @@ class Plotter:
                     # Remarks:
                     # for now, I am not looping over the keys
                     # access those individually to prepare proper input for plotting
+
+                    if self.testinfo.get("check_extra") == True:
+                        scurve_dict = noiseDict['SCurve']
+                        for key_hb, cbc_scurve in scurve_dict.items():
+                            for key_cbc, hist_scurve in cbc_scurve.items():
+                                self.plot_ROOT_2Dhist(hist=hist_scurve,
+                                                      name=f'SCurve_{moduleID}_{key_hb}_{key_cbc}',
+                                                      title=f'SCurve_{moduleID}_{key_hb}_{key_cbc}',
+                                                      outdir=_outdirModCBC)
+                                
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                
+                    
 
                     # Sensor Temperature
                     if self.testinfo.get("check_sensor_temperature") == True:
