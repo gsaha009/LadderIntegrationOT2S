@@ -191,10 +191,226 @@ class DataLoader:
             
         return pede_dict
 
-    
 
 
-    def __get_noise_data_for_ladder(self, nboards, nopticals, root_file_info, module_info):
+    def __get_extra_info(self, root_ptr, ibrd, iopt, **kwargs):
+        mod_level_hist_dict = {}
+        root_dir = f"Detector/Board_{ibrd}/OpticalGroup_{iopt}"
+        hname_lightYieldScan = kwargs.get('hname_lightYieldScan', f'D_B({ibrd})_VTRx_LightYieldScan_OpticalGroup({iopt})')
+        hname_eyeOpening_0p3 = kwargs.get('hname_eyeOpening_0p3', f'D_B({ibrd})_LpGBT_EyeOpeningScan_Power_0.333333_OpticalGroup({iopt})')
+        hname_eyeOpening_0p6 = kwargs.get('hname_eyeOpening_0p6', f'D_B({ibrd})_LpGBT_EyeOpeningScan_Power_0.666667_OpticalGroup({iopt})')
+        hname_eyeOpening_1p0 = kwargs.get('hname_eyeOpening_1p0', f'D_B({ibrd})_LpGBT_EyeOpeningScan_Power_1.000000_OpticalGroup({iopt})')
+        hname_phaseAlignEff  = kwargs.get('hname_phaseAlignEff',  f'D_B({ibrd})_CICtoLpGBT_PhaseAlignmentEfficiency_OpticalGroup({iopt})')
+        hname_foundPhaseDistr= kwargs.get('hname_foundPhaseDistr',f'D_B({ibrd})_CICtoLpGBT_FoundPhaseDistribution_OpticalGroup({iopt})')
+        hname_bestPhase      = kwargs.get('hname_bestPhase',      f'D_B({ibrd})_CICtoLpGBT_BestPhase_OpticalGroup({iopt})')
+        hname_bertErrorRate  = kwargs.get('hname_bertErrorRate',  f'D_B({ibrd})_BERTerrorRate_OpticalGroup({iopt})')
+        
+        hist_vtrx_light_yield_scan = root_ptr.Get(f'{root_dir}/{hname_lightYieldScan}')
+        if not hist_vtrx_light_yield_scan: logger.warning(f"{hname_lightYieldScan} not found in {root_dir}")
+        hist_vtrx_light_yield_scan.SetDirectory(0)
+
+        hist_eye_opening_scan_0p3 = root_ptr.Get(f'{root_dir}/{hname_eyeOpening_0p3}')
+        if not hist_eye_opening_scan_0p3: logger.warning(f"{hname_eyeOpening_0p3} not found in {root_dir}")
+        hist_eye_opening_scan_0p3.SetDirectory(0)
+
+        hist_eye_opening_scan_0p6 = root_ptr.Get(f'{root_dir}/{hname_eyeOpening_0p6}')
+        if not hist_eye_opening_scan_0p6: logger.warning(f"{hname_eyeOpening_0p6} not found in {root_dir}")        
+        hist_eye_opening_scan_0p6.SetDirectory(0)
+
+        hist_eye_opening_scan_1p0 = root_ptr.Get(f'{root_dir}/{hname_eyeOpening_1p0}')
+        if not hist_eye_opening_scan_1p0: logger.warning(f"{hname_eyeOpening_1p0} not found in {root_dir}")
+        hist_eye_opening_scan_1p0.SetDirectory(0)
+
+        hist_phase_alignment_efficiency = root_ptr.Get(f'{root_dir}/{hname_phaseAlignEff}')
+        if not hist_phase_alignment_efficiency: logger.warning(f"{hname_phaseAlignEff} not found in {root_dir}")
+        hist_phase_alignment_efficiency.SetDirectory(0)
+
+        hist_found_phase_distribution = root_ptr.Get(f'{root_dir}/{hname_foundPhaseDistr}')
+        if not hist_found_phase_distribution: logger.warning(f"{hname_foundPhaseDistr} not found in {root_dir}")        
+        hist_found_phase_distribution.SetDirectory(0)
+
+        hist_best_phase = root_ptr.Get(f'{root_dir}/{hname_bestPhase}')
+        if not hist_best_phase: logger.warning(f"{hname_bestPhase} not found in {root_dir}")
+        hist_best_phase.SetDirectory(0)
+
+        hist_bert_error_rate = root_ptr.Get(f'{root_dir}/{hname_bertErrorRate}')
+        if not hist_bert_error_rate: logger.warning(f"{hname_bertErrorRate} not found in {root_dir}")
+        hist_bert_error_rate.SetDirectory(0)
+        
+        mod_level_hist_dict['VTRx_LightYieldScan'] = hist_vtrx_light_yield_scan
+        mod_level_hist_dict['LpGBT_EyeOpeningScan_Power_0.33'] = hist_eye_opening_scan_0p3
+        mod_level_hist_dict['LpGBT_EyeOpeningScan_Power_0.67'] = hist_eye_opening_scan_0p6
+        mod_level_hist_dict['LpGBT_EyeOpeningScan_Power_1.00'] = hist_eye_opening_scan_1p0
+        mod_level_hist_dict['CICtoLpGBT_PhaseAlignmentEfficiency'] = {
+            f"Hybrid_0" : {
+                "L1": hist_phase_alignment_efficiency.GetBinContent(1),
+                "Stub0": hist_phase_alignment_efficiency.GetBinContent(2),
+                "Stub1": hist_phase_alignment_efficiency.GetBinContent(3),
+                "Stub2": hist_phase_alignment_efficiency.GetBinContent(4),
+                "Stub3": hist_phase_alignment_efficiency.GetBinContent(5),
+                "Stub4": hist_phase_alignment_efficiency.GetBinContent(6),                
+            },
+            f"Hybrid_1" : {
+                "L1": hist_phase_alignment_efficiency.GetBinContent(7),
+                "Stub0": hist_phase_alignment_efficiency.GetBinContent(8),
+                "Stub1": hist_phase_alignment_efficiency.GetBinContent(9),
+                "Stub2": hist_phase_alignment_efficiency.GetBinContent(10),
+                "Stub3": hist_phase_alignment_efficiency.GetBinContent(11),
+                "Stub4": hist_phase_alignment_efficiency.GetBinContent(12),
+            },
+        }
+        mod_level_hist_dict['CICtoLpGBT_FoundPhaseDistribution'] = hist_found_phase_distribution
+        mod_level_hist_dict['CICtoLpGBT_BestPhase'] = {
+            f"Hybrid_0" : {
+                "L1": hist_best_phase.GetBinContent(1),
+                "Stub0": hist_best_phase.GetBinContent(2),
+                "Stub1": hist_best_phase.GetBinContent(3),
+                "Stub2": hist_best_phase.GetBinContent(4),
+                "Stub3": hist_best_phase.GetBinContent(5),
+                "Stub4": hist_best_phase.GetBinContent(6),                
+            },
+            f"Hybrid_1" : {
+                "L1": hist_best_phase.GetBinContent(7),
+                "Stub0": hist_best_phase.GetBinContent(8),
+                "Stub1": hist_best_phase.GetBinContent(9),
+                "Stub2": hist_best_phase.GetBinContent(10),
+                "Stub3": hist_best_phase.GetBinContent(11),
+                "Stub4": hist_best_phase.GetBinContent(12),
+            },
+        }
+        mod_level_hist_dict['BERTerrorRate'] = {
+            f"Hybrid_0" : {
+                "L1": hist_bert_error_rate.GetBinContent(1),
+                "Stub0": hist_bert_error_rate.GetBinContent(2),
+                "Stub1": hist_bert_error_rate.GetBinContent(3),
+                "Stub2": hist_bert_error_rate.GetBinContent(4),
+                "Stub3": hist_bert_error_rate.GetBinContent(5),
+                "Stub4": hist_bert_error_rate.GetBinContent(6),                
+            },
+            f"Hybrid_1" : {
+                "L1": hist_bert_error_rate.GetBinContent(7),
+                "Stub0": hist_bert_error_rate.GetBinContent(8),
+                "Stub1": hist_bert_error_rate.GetBinContent(9),
+                "Stub2": hist_bert_error_rate.GetBinContent(10),
+                "Stub3": hist_bert_error_rate.GetBinContent(11),
+                "Stub4": hist_bert_error_rate.GetBinContent(12),
+            },
+        }
+
+        mod_level_hist_dict['CICtoLpGBT_PatternMatchingErrorRate'] = {}
+        mod_level_hist_dict['CBCtoCIC_lockingEfficiency'] = {}
+        mod_level_hist_dict['RegisterMatchingEfficiency'] = {}
+        mod_level_hist_dict['SCurve'] = {}
+        mod_level_hist_dict['ThresholdVsDelay'] = {}
+        mod_level_hist_dict['BestThresholdAndDelay'] = {}
+        
+        for ihbidx,ihb in enumerate([2*iopt, 1+2*iopt]):
+            hb = f"Hybrid_{ihb}"
+            hb_ = f"Hybrid_{ihbidx}"
+            hb_dir = f"{root_dir}/{hb}"
+            hname_patternMatchingErrorRate_CICtoLpGBT = kwargs.get("hname_patternMatchingErrorRate_CICtoLpGBT", f'D_B({ibrd})_O({iopt})_CICtoLpGBT_PatternMatchingErrorRate_Hybrid({ihb})')
+
+            hist_patternMatchingErrorRate = root_ptr.Get(f'{hb_dir}/{hname_patternMatchingErrorRate_CICtoLpGBT}')
+            if not hist_patternMatchingErrorRate: logger.warning(f"{hname_patternMatchingErrorRate_CICtoLpGBT} not found in {hb_dir}")
+            hist_patternMatchingErrorRate.SetDirectory(0)
+
+            mod_level_hist_dict['CICtoLpGBT_PatternMatchingErrorRate'][hb_] = {
+                "L1": hist_patternMatchingErrorRate.GetBinContent(1),
+                "Stub0": hist_patternMatchingErrorRate.GetBinContent(2),
+                "Stub1": hist_patternMatchingErrorRate.GetBinContent(3),
+                "Stub2": hist_patternMatchingErrorRate.GetBinContent(4),
+                "Stub3": hist_patternMatchingErrorRate.GetBinContent(5),
+                "Stub4": hist_patternMatchingErrorRate.GetBinContent(6),
+            }
+
+            hname_lockingEfficiency = kwargs.get("hname_lockingEfficiency", f'D_B({ibrd})_O({iopt})_CBCtoCIC_LockingEfficiency_Hybrid({ihb})')
+
+            hist_lockingEfficiency = root_ptr.Get(f'{hb_dir}/{hname_lockingEfficiency}')
+            if not hist_lockingEfficiency: logger.warning(f"{hname_lockingEfficiency} not found in {hb_dir}")
+            hist_lockingEfficiency.SetDirectory(0)
+            
+            mod_level_hist_dict['CBCtoCIC_lockingEfficiency'][hb_] = hist_lockingEfficiency
+
+
+            hname_registerMatchingEfficiency = kwargs.get("hname_registerMatchingEfficiency", f'D_B({ibrd})_O({iopt})_RegisterMatchingEfficiency_Hybrid({ihb})')
+
+            hist_registerMatchingEfficiency = root_ptr.Get(f'{hb_dir}/{hname_registerMatchingEfficiency}')
+            if not hist_registerMatchingEfficiency: logger.warning(f"{hname_registerMatchingEfficiency} not found in {hb_dir}")
+            hist_registerMatchingEfficiency.SetDirectory(0)
+            
+            temp = {}
+            for ibin,item in enumerate([f'CBC{i}' for i in range(8)]+['CIC']):
+                temp[item] = hist_registerMatchingEfficiency.GetBinContent(ibin+1)
+            mod_level_hist_dict['RegisterMatchingEfficiency'][hb_] = temp
+
+            temp_scurve = {}
+            temp_thDelayScan = {}
+            temp_thDelayBest = {}
+
+            for icbc in range(8):
+                cbc = f"CBC_{icbc}"
+                cbc_dir = f'{hb_dir}/{cbc}'
+                hname_scurve = kwargs.get("hname_scurve", f'D_B({ibrd})_O({iopt})_H({ihb})_SCurve_Chip({icbc})')
+                hist_scurve = root_ptr.Get(f'{cbc_dir}/{hname_scurve}')
+                if not hist_scurve: logger.warning(f'{hname_scurve} not found in {cbc_dir}')
+                hist_scurve.SetDirectory(0)
+                temp_scurve[cbc] = hist_scurve
+
+                hname_delayScan = kwargs.get("hname_thresholdDelayScan", f'D_B({ibrd})_O({iopt})_H({ihb})_ThresholdVsDelayScan_Chip({icbc})')
+                hist_delayScan = root_ptr.Get(f'{cbc_dir}/{hname_delayScan}')
+                if not hist_delayScan: logger.warning(f'{hname_delayScan} not found in {cbc_dir}')
+
+                nbins = hist_delayScan.GetNbinsX()
+                x = []
+                y = []
+                yerr = []
+                for i in range(nbins):
+                    x.append(hist_delayScan.GetBinCenter(i+1))
+                    y.append(hist_delayScan.GetBinContent(i+1))
+                    yerr.append(hist_delayScan.GetBinError(i+1))
+                temp_thDelayScan[cbc] = {'delay': x, 'th' : y, 'thErr': yerr}
+
+                hname_delayBest = kwargs.get("hname_bestThresholdAndDelay", f'D_B({ibrd})_O({iopt})_H({ihb})_BestThresholdAndDelay_Chip({icbc})')
+                hist_delayBest = root_ptr.Get(f'{cbc_dir}/{hname_delayBest}')
+                if not hist_delayBest: logger.warning(f'{hname_delayBest} not found in {cbc_dir}')
+
+                nbins = hist_delayBest.GetNbinsX()
+                x = []
+                y = []
+                yerr = []
+                for i in range(nbins):
+                    x.append(hist_delayBest.GetBinCenter(i+1))
+                    y.append(hist_delayBest.GetBinContent(i+1))
+                    yerr.append(hist_delayBest.GetBinError(i+1))
+                x = np.array(x)
+                y = np.array(y)
+                yerr = np.array(yerr)
+                max_idx = np.argsort(y)[::-1][0]
+                x_max = x[max_idx]
+                y_max = y[max_idx]
+                yerr_max = yerr[max_idx]
+                temp_thDelayBest[cbc] = {'bestDelay': float(x_max),
+                                         'bestThreshold' : float(y_max),
+                                         'bestThresholdErr': float(yerr_max)}
+                
+                
+                
+            mod_level_hist_dict['SCurve'][hb_] = temp_scurve
+            mod_level_hist_dict['ThresholdVsDelay'][hb_] = temp_thDelayScan
+            mod_level_hist_dict['BestThresholdAndDelay'][hb_] = temp_thDelayBest
+            
+            
+            # Delay scans
+            
+            
+
+            
+            
+        return mod_level_hist_dict
+
+        
+
+    def __get_data_for_ladder(self, nboards, nopticals, root_file_info, module_info):
         main_noise_dict = {}
 
         for temperature_key, test_iter_dict in root_file_info.items():
@@ -325,13 +541,22 @@ class DataLoader:
                             logger.info("skip checking pedestal info")
 
 
+                        if self.testinfo.get("check_extra") == True:
+                            extra_dict = self.__get_extra_info(root_ptr,
+                                                               ibrd,
+                                                               iopt)
+                            main_noise_dict[module_tag][temperature_key][test_iter].update(extra_dict)
+                        else:
+                            logger.info("skip checking extra info, like S-Curve, LightYieldScans, BERT etc.")
+
+
 
         return main_noise_dict
 
 
 
 
-    def __get_noise_data_for_kira(self, nboards, nopticals, root_file_info):
+    def __get_data_for_kira(self, nboards, nopticals, root_file_info):
         main_noise_dict = {}
 
         from_db = False
@@ -467,6 +692,16 @@ class DataLoader:
                         else:
                             logger.info("skip checking pedestal info")
 
+
+                        if self.testinfo.get("check_extra") == True:
+                            extra_dict = self.__get_extra_info(root_ptr,
+                                                               ibrd,
+                                                               iopt)
+                            main_noise_dict[module_tag][temperature_key][test_iter].update(extra_dict)
+                        else:
+                            logger.info("skip checking extra info, like S-Curve, LightYieldScans, BERT etc.")
+
+                            
         return main_noise_dict
 
 
@@ -490,14 +725,14 @@ class DataLoader:
         
         if self.in_ladder:
             module_info    = self.fileinfo["moduleinfo"]
-            main_noise_dict = self.__get_noise_data_for_ladder(nboards,
-                                                               nopticals,
-                                                               root_file_info,
-                                                               module_info)
+            main_noise_dict = self.__get_data_for_ladder(nboards,
+                                                         nopticals,
+                                                         root_file_info,
+                                                         module_info)
         elif self.in_kira:
-            main_noise_dict = self.__get_noise_data_for_kira(nboards,
-                                                             nopticals,
-                                                             root_file_info)
+            main_noise_dict = self.__get_data_for_kira(nboards,
+                                                       nopticals,
+                                                       root_file_info)
         
         else:
             raise RuntimeError("At least one of the single_module_box & ladder must be True")

@@ -9,6 +9,7 @@ import importlib
 import numpy as np
 
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from matplotlib.colors import Normalize
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
@@ -21,6 +22,20 @@ CMNmod = importlib.import_module("modules.2SLadderCMNAna.CMNFitter")
 
 import logging
 logger = logging.getLogger('main')
+
+
+import ROOT
+#from CMSStyle import setTDRStyle,setCMSText
+ROOT.gROOT.SetBatch(True)
+import CMS_lumi
+from tdrstyle import *
+
+ROOT.gStyle.SetImageScaling(3.0)
+
+#tdrstyle.setTDRStyle()
+#CMS_lumi.writeExtraText = 1
+#CMS_lumi.extraText = "Preliminary"
+
 
 
 
@@ -117,6 +132,9 @@ class Plotter:
                      name = "Default",
                      **kwargs):
 
+        annotint = kwargs.get('annotint', False)
+        norm = kwargs.get('norm', None)
+        
         if isinstance(data, np.ndarray):
             data = np.abs(data).T
         elif isinstance(data, list):
@@ -160,9 +178,12 @@ class Plotter:
         if vmax is None:
             #vmax=threshold
             vmax=float(np.max(data))
-            
-        im = ax.imshow(masked_data, cmap=cmap, aspect="auto", origin="lower", vmin=vmin, vmax=vmax)
 
+        if norm:
+            im = ax.imshow(masked_data, cmap=cmap, norm=norm, aspect="auto", origin="lower")
+        else:
+            im = ax.imshow(masked_data, cmap=cmap, aspect="auto", origin="lower", vmin=vmin, vmax=vmax)  
+        
         cbar = plt.colorbar(im, ax=ax)
         cbar.set_label(cbar_label, fontsize=12)
         cbar.ax.tick_params(labelsize=12)
@@ -199,10 +220,15 @@ class Plotter:
         #threshold2 = np.percentile(data, 50)
         threshold2 = np.median(data)
         for i in range(data.shape[0]):
-            if i == 8: continue
+            if (data.shape[0] == 17) & (i == 8): continue
             for j in range(data.shape[1]):
+                num = float(data[i, j])
+                if annotint:
+                    num = int(num)
+                else:
+                    num = round(num, 2)
                 ax.text(
-                    j, i, f"{data[i, j]:.2f}",  # format with 2 decimals
+                    j, i, f"{num}",  # format with 2 decimals
                     ha="center", va="center",
                     #color="black" if data[i, j] < threshold2 else "white",
                     color="black",
@@ -212,7 +238,9 @@ class Plotter:
         ax.set_title(f"{title}", fontsize=14, loc='right')
         ax.tick_params(direction="in", top=False, right=False, labelsize=12, length=3)
         plt.tight_layout()
-        fig.savefig(f"{outdir}/{name}.{self.testinfo.get('plot_extn')}", dpi=self.testinfo.get('plot_dpi'))
+        fig.savefig(f"{outdir}/{name}.{self.testinfo.get('plot_extn')}",
+                    dpi=self.testinfo.get('plot_dpi'),
+                    bbox_inches="tight")
         plt.close()
 
 
@@ -744,7 +772,175 @@ class Plotter:
             #from IPython import embed; embed(); exit()
             
         return fracs
-    
+
+
+    def plot_ROOT_2Dhist(self, name="default", title="default",
+                         hist=None, **kwargs):
+
+        outdir = kwargs.get("outdir", "../Output")
+        
+        
+        #ROOT.gROOT.LoadMacro("tdrstyle.C")
+        #setTDRStyle()
+        #setCMSText()
+        
+        #ROOT.gROOT.LoadMacro("CMS_lumi.C")
+
+        ROOT.gStyle.SetPalette(ROOT.kViridis)
+
+        CANVAS_W = 800
+        CANVAS_H = 700
+
+        c = ROOT.TCanvas(f"c_{name}", name, CANVAS_W, CANVAS_H)
+        
+        # CMS margins (important!)
+        c.SetLeftMargin(0.12)
+        c.SetRightMargin(0.16)   # space for COLZ
+        c.SetBottomMargin(0.12)
+        c.SetTopMargin(0.08)
+        
+        #hist.SetTitle("")           # CMS uses external labels
+        hist.Draw("COLZ")
+
+        # Add CMS lumi/label on top-left
+        #ROOT.CMS_lumi.writeExtraText = True
+        #ROOT.CMS_lumi.extraText = "Private"
+
+        #c.Update()
+        c.SaveAs(f"{outdir}/{name}.png")
+        c.Close()
+
+
+
+    def __draw_pad_title(self,text,pos=[0.35, 0.92]):
+        latex = ROOT.TLatex()
+        latex.SetNDC(True)
+        latex.SetTextAlign(13)     # left-top
+        latex.SetTextFont(42)      # CMS font
+        latex.SetTextSize(0.045)
+        latex.DrawLatex(pos[0], pos[1], text)
+            
+        
+
+    def plot_ROOT_2Dhist(self,
+                         hist_dict=None,
+                         name="default",
+                         title="default",
+                         **kwargs):
+
+        outdir = kwargs.get("outdir", "../Output")
+        
+        
+        #ROOT.gROOT.LoadMacro("tdrstyle.C")
+        setTDRStyle()
+        #setCMSText()
+        
+        #ROOT.gROOT.LoadMacro("CMS_lumi.C")
+        CMS_lumi.writeExtraText = False   # just "CMS"
+        CMS_lumi.lumi_sqrtS = ""          # no lumi text
+        
+        #ROOT.gStyle.SetPalette(ROOT.kViridis)
+
+        #CANVAS_W = 800
+        #CANVAS_H = 700
+
+        c = ROOT.TCanvas(f"c", "", 2400, 2000)
+        
+        # CMS margins (important!)
+        c.SetLeftMargin(0.12)
+        c.SetRightMargin(0.16)   # space for COLZ
+        c.SetBottomMargin(0.18)
+        c.SetTopMargin(0.18)
+
+        nHists = len(hist_dict)
+        c.Divide(nHists//2, (nHists - nHists//2), 0.01, 0.01)
+
+        for i, (key, hist) in enumerate(hist_dict.items()):
+        
+            c.cd(i+1)
+            ROOT.gPad.SetRightMargin(0.15)
+            hist.Draw("COLZ") if i > 0 else hist.Draw("COLZ TEXT")
+            self.__draw_pad_title(key,pos=[0.15,0.99])
+
+
+
+        # ---- CMS label tuning ----
+        CMS_lumi.cmsTextSize = 0.4
+        CMS_lumi.extraTextSize = 0.2
+        CMS_lumi.relPosX = 0.01
+        CMS_lumi.relPosY = 0.01
+        CMS_lumi.writeExtraText = True
+        CMS_lumi.extraText = "Internal"
+
+            
+        #c.cd()  # go back to canvas (not a pad)
+        #CMS_lumi.CMS_lumi(c, 0, 0)
+        
+        c.SaveAs(f"{outdir}/{name}.png")
+        c.Close()
+
+        
+        
+
+    def plot_ROOT_2Dhist_AllCBCs(self, name="default", title="default",
+                                 hist_dict=None, **kwargs):
+
+        outdir = kwargs.get("outdir", "../Output")
+        
+        
+        #ROOT.gROOT.LoadMacro("tdrstyle.C")
+        setTDRStyle()
+        #setCMSText()
+        
+        #ROOT.gROOT.LoadMacro("CMS_lumi.C")
+        CMS_lumi.writeExtraText = False   # just "CMS"
+        CMS_lumi.lumi_sqrtS = ""          # no lumi text
+        
+        #ROOT.gStyle.SetPalette(ROOT.kViridis)
+
+        #CANVAS_W = 800
+        #CANVAS_H = 700
+
+        c = ROOT.TCanvas(f"c", "", 3200, 920)
+        
+        # CMS margins (important!)
+        #c.SetLeftMargin(0.12)
+        #c.SetRightMargin(0.16)   # space for COLZ
+        #c.SetBottomMargin(0.12)
+        #c.SetTopMargin(0.52)
+
+        c.Divide(8,2,0.01,0.01)
+
+        for i in range(8):
+            c.cd(i+1)
+            ROOT.gPad.SetRightMargin(0.15)
+            hist_dict['Hybrid_0'][f'CBC_{i}'].Draw("COLZ")
+            self.__draw_pad_title(f"Hybrid 0 - CBC {i}")
+        for i in range(8):
+            c.cd(i+9)
+            ROOT.gPad.SetRightMargin(0.15)
+            hist_dict['Hybrid_1'][f'CBC_{7-i}'].Draw("COLZ")
+            self.__draw_pad_title(f"Hybrid 1 - CBC {7-i}")
+
+
+
+        # ---- CMS label tuning ----
+        CMS_lumi.cmsTextSize = 0.4
+        CMS_lumi.extraTextSize = 0.2
+        CMS_lumi.relPosX = 0.01
+        CMS_lumi.relPosY = 0.01
+        CMS_lumi.writeExtraText = True
+        CMS_lumi.extraText = "Internal"
+
+            
+        c.cd()  # go back to canvas (not a pad)
+        CMS_lumi.CMS_lumi(c, 0, 0)
+        
+        c.SaveAs(f"{outdir}/{name}.png")
+        c.Close()
+
+        
+        
     
     def plotEverything(self):
 
@@ -897,7 +1093,18 @@ class Plotter:
 
             common_noise_frac_simfit_hb0_cbc_mod = {}
             common_noise_frac_simfit_hb1_cbc_mod = {}
+
+            # CICtoLpGBT_PhaseAlignmentEfficiency
+            CICtoLpGBT_PhaseAlignmentEfficiency_mod = {}
+            CICtoLpGBT_BestPhase_mod = {}
+            CICtoLpGBT_PatternMatchingErrorRate_mod = {}
             
+            BERTerrorRate_mod = {}
+            RegisterMatchingEfficiency_mod = {}
+
+            bestDelay_mod = {}
+            bestTh_mod = {}
+
             
             # define dict to save info per module level
             moduleIDs = []
@@ -980,6 +1187,18 @@ class Plotter:
                         common_noise_frac_simfit_hb0_cbc_mod[martaTemp] = []
                         common_noise_frac_simfit_hb1_cbc_mod[martaTemp] = []
 
+                        CICtoLpGBT_PhaseAlignmentEfficiency_mod[martaTemp] = []
+                        CICtoLpGBT_BestPhase_mod[martaTemp] = []
+                        CICtoLpGBT_PatternMatchingErrorRate_mod[martaTemp] = []
+                        
+                        BERTerrorRate_mod[martaTemp] = []
+                        RegisterMatchingEfficiency_mod[martaTemp] = []
+
+
+                        bestDelay_mod[martaTemp] = []
+                        bestTh_mod[martaTemp] = []
+
+                        
                         
                     noiseDict = _noiseDict["Run1"] # right now, only one run is allowed
 
@@ -998,6 +1217,108 @@ class Plotter:
                     # Remarks:
                     # for now, I am not looping over the keys
                     # access those individually to prepare proper input for plotting
+
+                    if self.testinfo.get("check_extra") == True:
+                        scurve_dict = noiseDict['SCurve']
+                        self.plot_ROOT_2Dhist_AllCBCs(hist_dict=scurve_dict,
+                                                      name=f'SCurve_{moduleID}',
+                                                      title=f'SCurve_{moduleID}',
+                                                      outdir=_outdirModCBC)
+                        eye_open_dict = {
+                            "VTRx_LightYieldScan": noiseDict["VTRx_LightYieldScan"],
+                            "LpGBT_EyeOpeningScan_Power_0.33": noiseDict["LpGBT_EyeOpeningScan_Power_0.33"],
+                            "LpGBT_EyeOpeningScan_Power_0.67": noiseDict["LpGBT_EyeOpeningScan_Power_0.67"],
+                            "LpGBT_EyeOpeningScan_Power_1.00": noiseDict["LpGBT_EyeOpeningScan_Power_1.00"],
+                        }
+                        self.plot_ROOT_2Dhist(hist_dict = eye_open_dict,
+                                              name = f"VTRx_LightYeild_and_EyeOpening",
+                                              title = f"VTRx_LightYeild_and_EyeOpening",
+                                              outdir = _outdirMod)
+
+
+                        CICtoLpGBT_PhaseAlignmentEfficiency_mod[martaTemp].append(
+                            list(noiseDict['CICtoLpGBT_PhaseAlignmentEfficiency']['Hybrid_0'].values()))
+                        CICtoLpGBT_PhaseAlignmentEfficiency_mod[martaTemp].append(
+                            list(noiseDict['CICtoLpGBT_PhaseAlignmentEfficiency']['Hybrid_1'].values()))
+
+
+                        CICtoLpGBT_BestPhase_mod[martaTemp].append(
+                            list(noiseDict['CICtoLpGBT_BestPhase']['Hybrid_0'].values()))
+                        CICtoLpGBT_BestPhase_mod[martaTemp].append(
+                            list(noiseDict['CICtoLpGBT_BestPhase']['Hybrid_1'].values()))
+                        
+
+                        BERTerrorRate_mod[martaTemp].append(
+                            list(noiseDict['BERTerrorRate']['Hybrid_0'].values()))
+                        BERTerrorRate_mod[martaTemp].append(
+                            list(noiseDict['BERTerrorRate']['Hybrid_1'].values()))
+
+
+                        RegisterMatchingEfficiency_mod[martaTemp].append(
+                            list(noiseDict['RegisterMatchingEfficiency']['Hybrid_0'].values()))
+                        RegisterMatchingEfficiency_mod[martaTemp].append(
+                            list(noiseDict['RegisterMatchingEfficiency']['Hybrid_1'].values()))
+
+
+                        CICtoLpGBT_PatternMatchingErrorRate_mod[martaTemp].append(
+                            list(noiseDict['CICtoLpGBT_PatternMatchingErrorRate']['Hybrid_0'].values())
+                        )
+                        CICtoLpGBT_PatternMatchingErrorRate_mod[martaTemp].append(
+                            list(noiseDict['CICtoLpGBT_PatternMatchingErrorRate']['Hybrid_1'].values())
+                        )
+                        
+
+                        thVsDelayDict = noiseDict['ThresholdVsDelay']
+                        for ihb in range(2):
+                            delay = None
+                            threshold = []
+                            thVsDelayDict_hb = thVsDelayDict[f'Hybrid_{ihb}']
+                            for icbc in range(8):
+                                temp = thVsDelayDict_hb[f'CBC_{icbc}']
+                                x = temp['delay']
+                                if icbc == 0:
+                                    delay = np.array(x)
+                                y = np.array(temp['th'])
+                                yerr = np.array(temp['thErr'])
+                                threshold.append(np.concatenate((y[:,None], yerr[:,None]), axis=1))
+                            
+                            self.plot_basic(x          = delay,
+                                            data_list  = threshold,
+                                            legends    = ["Chip 0", "Chip 1", "Chip 2", "Chip 3",
+                                                          "Chip 4", "Chip 5", "Chip 6", "Chip 7"],
+                                            title      = f"DelayVsThr_Hb{ihb}_{moduleID}: ({martaTemp})",
+                                            name       = f"Hist_DelayVsThr_Hybrid{ihb}_{martaTemp}_{moduleID}_{datakey}",
+                                            xlabel     = "Delay [ns]",
+                                            ylabel     = "50% threshold [VcTh]",
+                                            marker     = "o",
+                                            linewidth  = 0.5,
+                                            elinewidth = 0.0,
+                                            capsize    = 0.0,
+                                            markersize = 1.0,
+                                            #ylim       = [20.0,27.0],
+                                            outdir     = _outdirModCBC)
+
+
+                        bestThDelayDict = noiseDict['BestThresholdAndDelay']
+                        #for ihb in range(2):
+                        hb0dict = bestThDelayDict[f'Hybrid_0']
+                        delay_hb0 = []
+                        th_hb0 = []
+                        for icbc in range(8):
+                            delay_hb0.append(hb0dict[f'CBC_{icbc}']['bestDelay'])
+                            th_hb0.append(hb0dict[f'CBC_{icbc}']['bestThreshold'])
+                        hb1dict = bestThDelayDict[f'Hybrid_1']
+                        delay_hb1 = []
+                        th_hb1 = []
+                        for icbc in range(8):
+                            delay_hb1.append(hb0dict[f'CBC_{icbc}']['bestDelay'])
+                            th_hb1.append(hb0dict[f'CBC_{icbc}']['bestThreshold'])                            
+                        delay_cbc = delay_hb0 + [0] + delay_hb1
+                        th_cbc = th_hb0 + [0] + th_hb1
+                        
+                        bestDelay_mod[martaTemp].append(delay_cbc)
+                        bestTh_mod[martaTemp].append(th_cbc)
+                        
 
                     # Sensor Temperature
                     if self.testinfo.get("check_sensor_temperature") == True:
@@ -1694,11 +2015,111 @@ class Plotter:
             # Loop over modules end here
             allModuleIDs += moduleIDs
 
-            
+
+
             temps = list(strip_noise_hb0_bot_mod.keys())
             logger.info("Plotting Noise per Module ...")
             for temp in temps:
                 logger.info(temp)
+                #from IPython import embed; embed(); exit()
+
+                if self.testinfo.get("check_extra") == True:
+                    phAlnEff = CICtoLpGBT_PhaseAlignmentEfficiency_mod[temp]
+
+                    self.plot_heatmap(phAlnEff,
+                                      title       = f"CICtoLpGBT-PhaseAlignEff: {temp}",
+                                      name        = f"Plot_CICtoLpGBT_PhaseAlignmentEfficiency_{temp}_{datakey}",
+                                      xticklabels = [f'{id}-hb{j}' for id in moduleIDs for j in range(2)],
+                                      yticklabels = ['L1', 'Stub0', 'Stub1', 'Stub2', 'Stub3', 'Stub4'],
+                                      colmap      = "RdYlGn",
+                                      cb_label    = "Efficiency",
+                                      vmin        = 0.0,
+                                      vmax        = 1.0,
+                                      outdir      = _outdir)
+
+                    bestPhase = CICtoLpGBT_BestPhase_mod[temp]
+                    
+                    self.plot_heatmap(bestPhase,
+                                      title       = f"CICtoLpGBT-BestPhase: {temp}",
+                                      name        = f"Plot_CICtoLpGBT_BestPhase_{temp}_{datakey}",
+                                      xticklabels = [f'{id}-hb{j}' for id in moduleIDs for j in range(2)],
+                                      yticklabels = ['L1', 'Stub0', 'Stub1', 'Stub2', 'Stub3', 'Stub4'],
+                                      colmap      = mcolors.ListedColormap(["#A8D5BA", "#D9534F"]),
+                                      norm        = mcolors.BoundaryNorm([0, 15, 16], 2),
+                                      cb_label    = "BestPhase",
+                                      #vmin        = 0,
+                                      #vmax        = 15,
+                                      outdir      = _outdir,
+                                      annotint    = True)
+
+                    bertErr = BERTerrorRate_mod[temp]
+                    
+                    self.plot_heatmap(bertErr,
+                                      title       = f"LpGBTtoFPGA-BERTErrorRate: {temp}",
+                                      name        = f"Plot_LpGBTtoFPGA_BERTErrorRate_{temp}_{datakey}",
+                                      xticklabels = [f'{id}-hb{j}' for id in moduleIDs for j in range(2)],
+                                      yticklabels = ['L1', 'Stub0', 'Stub1', 'Stub2', 'Stub3', 'Stub4'],
+                                      colmap      = "RdYlGn_r",
+                                      cb_label    = "Eroor Rate",
+                                      vmin        = 0.0,
+                                      vmax        = 1.0,
+                                      outdir      = _outdir)
+
+                    regMatchEff = RegisterMatchingEfficiency_mod[temp]
+                    self.plot_heatmap(regMatchEff,
+                                      title       = f"CBCCIC-RegMatchEff: {temp}",
+                                      name        = f"Plot_CBCCIC_RegisterMatchingEfficiency_{temp}_{datakey}",
+                                      xticklabels = [f'{id}-hb{j}' for id in moduleIDs for j in range(2)],
+                                      yticklabels = [f'CBC{i}' for i in range(8)]+['CIC'],
+                                      colmap      = "RdYlGn",
+                                      cb_label    = "Efficiency",
+                                      vmin        = 0.0,
+                                      vmax        = 1.0,
+                                      outdir      = _outdirCBC)
+
+                    bestDelay = bestDelay_mod[temp]
+                    self.plot_heatmap(bestDelay,
+                                      title       = f"Best Delay [ns] : {temp}",
+                                      name        = f"Plot_best_delay_{temp}_{datakey}",
+                                      xticklabels = moduleIDs,
+                                      yticklabels = [f"Hb0_CBC{i}" for i in range(8)] + ["SEH"] + [f"Hb1_CBC{i}" for i in range(8)],
+                                      colmap      = "GnBu",
+                                      cb_label    = "delay [ns]",
+                                      vmin        = 50.0,
+                                      vmax        = 70.0,
+                                      outdir      = _outdirCBC)
+                    bestTh = bestTh_mod[temp]
+                    self.plot_heatmap(bestTh,
+                                      title       = f"Best Threshold [VcTh] : {temp}",
+                                      name        = f"Plot_best_threshold_{temp}_{datakey}",
+                                      xticklabels = moduleIDs,
+                                      yticklabels = [f"Hb0_CBC{i}" for i in range(8)] + ["SEH"] + [f"Hb1_CBC{i}" for i in range(8)],
+                                      colmap      = "GnBu",
+                                      cb_label    = "best threshold [VcTh]",
+                                      vmin        = 550.0,
+                                      vmax        = 580.0,
+                                      outdir      = _outdirCBC)
+
+
+
+                    patMatErrRate = CICtoLpGBT_PatternMatchingErrorRate_mod[temp]
+                    self.plot_heatmap(patMatErrRate,
+                                      title       = f"CICtoLpGBT-PatternMatchingErrorRate: {temp}",
+                                      name        = f"Plot_CICtoLpGBT_PatternMatchingErrorRate_{temp}_{datakey}",
+                                      xticklabels = [f'{id}-hb{j}' for id in moduleIDs for j in range(2)],
+                                      yticklabels = ['L1', 'Stub0', 'Stub1', 'Stub2', 'Stub3', 'Stub4'],
+                                      colmap      = 'RdYlGn_r',
+                                      vmin        = 0.0,
+                                      vmax        = 1.0,
+                                      cb_label    = "ErrorRate",
+                                      #vmin        = 0,
+                                      #vmax        = 15,
+                                      outdir      = _outdir,
+                                      annotint    = False)
+
+
+                    
+                
                 if self.testinfo.get("check_sensor_temperature") == True:
                     sensor_temps = sensor_temps_mod[temp]
                     sensor_temps = np.array(sensor_temps)
