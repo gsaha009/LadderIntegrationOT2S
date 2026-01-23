@@ -84,6 +84,8 @@ def main(args):
     # ==>>> Process Events ==>>>
     events = processor(infile, "Events")
 
+    from IPython import embed; embed(); exit()
+    
 
     #OG = int(np.sort(np.unique(ak.to_numpy(ak.flatten(events.cluster.opticalGroupId))))[-1])
     OGs = np.arange(12).tolist()
@@ -283,7 +285,7 @@ def main(args):
                    ylabel = "frquency (Hz)",
                    title  = "hidden_noise_freq",
                    name   = "hidden_noise_freq_with_time",
-                   ylim   = [0,300],
+                   ylim   = [0,1000],
                    outdir = output)
 
     # ==>>> Sum over time
@@ -330,7 +332,7 @@ def main(args):
                ylabel    = "amplitude (arbitrary)",
                outdir    = output,
                linewidth = 1.5,
-               xlim      = [0, 300],
+               xlim      = [0, 500],
                fit       = False)
     
 
