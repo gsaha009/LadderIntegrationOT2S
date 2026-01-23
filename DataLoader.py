@@ -242,7 +242,7 @@ class DataLoader:
         mod_level_hist_dict['LpGBT_EyeOpeningScan_Power_0.67'] = hist_eye_opening_scan_0p6
         mod_level_hist_dict['LpGBT_EyeOpeningScan_Power_1.00'] = hist_eye_opening_scan_1p0
         mod_level_hist_dict['CICtoLpGBT_PhaseAlignmentEfficiency'] = {
-            f"Hybrid_{2*iopt}" : {
+            f"Hybrid_0" : {
                 "L1": hist_phase_alignment_efficiency.GetBinContent(1),
                 "Stub0": hist_phase_alignment_efficiency.GetBinContent(2),
                 "Stub1": hist_phase_alignment_efficiency.GetBinContent(3),
@@ -250,7 +250,7 @@ class DataLoader:
                 "Stub3": hist_phase_alignment_efficiency.GetBinContent(5),
                 "Stub4": hist_phase_alignment_efficiency.GetBinContent(6),                
             },
-            f"Hybrid_{2*iopt+1}" : {
+            f"Hybrid_1" : {
                 "L1": hist_phase_alignment_efficiency.GetBinContent(7),
                 "Stub0": hist_phase_alignment_efficiency.GetBinContent(8),
                 "Stub1": hist_phase_alignment_efficiency.GetBinContent(9),
@@ -261,7 +261,7 @@ class DataLoader:
         }
         mod_level_hist_dict['CICtoLpGBT_FoundPhaseDistribution'] = hist_found_phase_distribution
         mod_level_hist_dict['CICtoLpGBT_BestPhase'] = {
-            f"Hybrid_{2*iopt}" : {
+            f"Hybrid_0" : {
                 "L1": hist_best_phase.GetBinContent(1),
                 "Stub0": hist_best_phase.GetBinContent(2),
                 "Stub1": hist_best_phase.GetBinContent(3),
@@ -269,7 +269,7 @@ class DataLoader:
                 "Stub3": hist_best_phase.GetBinContent(5),
                 "Stub4": hist_best_phase.GetBinContent(6),                
             },
-            f"Hybrid_{2*iopt+1}" : {
+            f"Hybrid_1" : {
                 "L1": hist_best_phase.GetBinContent(7),
                 "Stub0": hist_best_phase.GetBinContent(8),
                 "Stub1": hist_best_phase.GetBinContent(9),
@@ -279,7 +279,7 @@ class DataLoader:
             },
         }
         mod_level_hist_dict['BERTerrorRate'] = {
-            f"Hybrid_{2*iopt}" : {
+            f"Hybrid_0" : {
                 "L1": hist_bert_error_rate.GetBinContent(1),
                 "Stub0": hist_bert_error_rate.GetBinContent(2),
                 "Stub1": hist_bert_error_rate.GetBinContent(3),
@@ -287,7 +287,7 @@ class DataLoader:
                 "Stub3": hist_bert_error_rate.GetBinContent(5),
                 "Stub4": hist_bert_error_rate.GetBinContent(6),                
             },
-            f"Hybrid_{2*iopt+1}" : {
+            f"Hybrid_1" : {
                 "L1": hist_bert_error_rate.GetBinContent(7),
                 "Stub0": hist_bert_error_rate.GetBinContent(8),
                 "Stub1": hist_bert_error_rate.GetBinContent(9),
