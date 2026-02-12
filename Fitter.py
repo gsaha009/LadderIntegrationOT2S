@@ -28,7 +28,7 @@ class Fitter:
                 "m": self.fitparams.get("m", 0.1),
                 "c": self.fitparams.get("c", 0.002)
             }
-            self.params_range = [(-0.001, 0.01), (0.00001, 1.0)]
+            self.params_range = [(-0.001, 0.01), (0.00001, 25.0)]
             self.result = self.__fit()
         elif self.modeltype == "pure_gauss":
             self.model = self.__gauss_model

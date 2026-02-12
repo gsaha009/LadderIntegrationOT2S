@@ -1,8 +1,10 @@
+import time
 import uproot
 import awkward as ak
 import logging
 import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize
+import matplotlib.colors as mcolors
+from matplotlib.colors import Normalize, ListedColormap
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 import mplhep as hep
@@ -133,6 +135,7 @@ def plot_basic(x = None, data_dict = None,
     nticks = kwargs.get("nticks", None)
     tick_offset = kwargs.get("tick_offset", 0.1)
     legend_labels = kwargs.get("legs", None)
+    density = kwargs.get("density", False)
     
     fig, ax = plt.subplots(figsize=basics["size"])
     hep.cms.text(basics["heplogo"], loc=basics["logoloc"]) # CMS
@@ -142,8 +145,10 @@ def plot_basic(x = None, data_dict = None,
     x = np.array(x)
     for i,(key,data) in enumerate(data_dict.items()):
         data = np.array(data)
-        _val = data[:,0]
-        err  = data[:,1]
+        _val = data if data.ndim == 1 else data[:,0]
+        if density == True:
+            _val = _val/float(np.sum(_val))
+        err  = np.zeros_like(_val) if data.ndim == 1 else data[:,1]
         val  = np.gradient(_val) if dograd else _val 
         ax.errorbar(x,
                     val,
@@ -192,7 +197,7 @@ def plot_basic(x = None, data_dict = None,
             #bbox_to_anchor=(1, 1)
         )
     else:
-        ax.legend(fontsize=12, framealpha=1, facecolor='white')
+        ax.legend(fontsize=10, framealpha=1, facecolor='white', ncol=2)
 
     
     ax.grid(True, color='gray', linestyle='--', linewidth=0.3, zorder=0)        
@@ -228,6 +233,57 @@ def plot_basic(x = None, data_dict = None,
 
 
 
+def hist_basic(bins = None, data_dict = None,
+               title = 'default', name = 'default',
+               **kwargs):
+    basics = plot_basic_settings()
+
+    outdir = kwargs.get("outdir", "../Output")
+    ylim = kwargs.get("ylim", basics["ylim"])
+    xlim = kwargs.get("xlim", basics["xlim"])
+    linewidth = kwargs.get("linewidth", basics["linewidth"]) 
+    xlabel = kwargs.get("xlabel", "var")
+    ylabel = kwargs.get("ylabel", "var")
+    colors = kwargs.get("colors", basics["colors"])
+    linestyles = kwargs.get("linestyles", basics["linestyles"])
+    legend_labels = kwargs.get("legs", None)
+    density = kwargs.get("density", False)
+    logy = kwargs.get("logy", False)
+    
+    fig, ax = plt.subplots(figsize=basics["size"])
+    hep.cms.text(basics["heplogo"], loc=basics["logoloc"]) # CMS
+
+    for i,(key,data) in enumerate(data_dict.items()):
+        data = np.array(data)
+        val = data if data.ndim == 1 else data[:,0]
+        err  = np.zeros_like(val) if data.ndim == 1 else data[:,1]
+
+        ax.hist(val,
+                bins=np.linspace(bins[0], bins[1], bins[2]),
+                histtype='step',
+                linewidth=linewidth,
+                linestyle=linestyles[i],
+                color=colors[i],
+                density=density,
+                label=key,
+                log=logy)
+
+    ax.grid(True, color='gray', linestyle='--', linewidth=0.3, zorder=0)
+    
+    ax.legend(fontsize=13, framealpha=1, facecolor='white')
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    
+    ax.set_title(f"{title}", fontsize=14, loc='right')
+    
+    plt.tight_layout()
+    fig.savefig(f"{outdir}/{name}.png", dpi=300, bbox_inches="tight")
+    logger.info(f"Plot saved : {outdir}/{name}.png")
+    plt.close()
+    
+    
+
+
 def plot_heatmap(data = None, title = 'default', name = 'default', **kwargs):
     basics = plot_basic_settings()
 
@@ -247,8 +303,37 @@ def plot_heatmap(data = None, title = 'default', name = 'default', **kwargs):
         
     if vmax is None:
         vmax=float(np.max(data))
-            
-    im = ax.imshow(data, cmap=colmap, aspect="auto", origin="lower", vmin=vmin, vmax=vmax)
+
+
+    neg_cmap = plt.cm.gray(np.linspace(0.05, 0.75, 64)) # black to gray
+
+    #pos_colors = [
+    #    "#f7fcb9",  # pale yellow
+    #    "#41ab5d",  # green
+    #    "#6a51a3",  # purple
+    #    "#7f2704",  # dark brown
+    #]
+    #pos_colors = [
+    #    "#ffffb2",  # light yellow
+    #    "#66c2a5",  # green-teal
+    #    "#3288bd",  # blue-teal
+    #    "#084081",  # dark blue
+    #]
+    #pos_cmap = mcolors.LinearSegmentedColormap.from_list(
+    #    "pos_custom",
+    #    pos_colors,
+    #    N=64
+    #)
+    #pos_cmap = pos_cmap(np.linspace(0, 1, 64))  # (64, 4)
+    
+    #pos_cmap = plt.cm.YlGnBu(np.linspace(0.1, 0.9, 64)) # light orange to brown
+    pos_cmap = plt.cm.YlOrBr(np.linspace(0.1, 0.9, 64)) # light orange to brown
+
+    cmap = ListedColormap(np.vstack((neg_cmap, pos_cmap)))
+    norm = mcolors.TwoSlopeNorm(vmin=vmin, vcenter=(vmin+vmax)//2, vmax = vmax)
+    
+    #im = ax.imshow(data, cmap=colmap, aspect="auto", origin="lower", vmin=vmin, vmax=vmax)
+    im = ax.imshow(data, cmap=cmap, norm=norm, aspect="auto", origin="lower")
 
     cbar = plt.colorbar(im, ax=ax)
     cbar.set_label(cbar_label, fontsize=12)
@@ -271,3 +356,43 @@ def plot_heatmap(data = None, title = 'default', name = 'default', **kwargs):
     
 
 
+def plot_colormesh(x = None,
+                   y = None,
+                   z = None,
+                   title = 'default',
+                   name = 'default',
+                   **kwargs):
+    basics = plot_basic_settings()
+
+    outdir  = kwargs.get("outdir", "../Output")
+    shading = kwargs.get("shading", "auto")
+    xlabel  = kwargs.get("xlabel", None)
+    ylabel  = kwargs.get("ylabel", None)
+    ylim    = kwargs.get("ylim", None)
+    
+    fig, ax = plt.subplots(figsize=basics["size"])
+    hep.cms.text(basics["heplogo"], loc=basics["logoloc"]) # CMS
+
+    pcm = ax.pcolormesh(
+        x,
+        y,
+        z,
+        shading=shading
+    )
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title, fontsize=12, loc='right')
+
+    # Optional: limit frequency range
+    if ylim is not None:
+        ax.set_ylim(ylim[0], ylim[1])
+
+    # Colorbar
+    #fig.colorbar(pcm, ax=ax, label="amplitude")
+
+    plt.tight_layout()
+    fig.savefig(f"{outdir}/{name}.png", dpi=300, bbox_inches="tight")
+    logger.info(f"Plot saved : {outdir}/{name}.png")
+    plt.close()
+    

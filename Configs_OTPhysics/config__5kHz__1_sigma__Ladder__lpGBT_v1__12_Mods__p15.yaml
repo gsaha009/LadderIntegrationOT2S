@@ -1,0 +1,13 @@
+# config for OT Physics
+
+# Input file
+INPUT_FILE: /eos/project/i/iphctau/public/gsaha/TrackerUpgrade/OTPhysicsPh2acfFlatRootFiles/run_000065_Board000_Ladder_lpGBTv1_5kHz_1sigma_Flat.root
+
+# Outdir
+OUTPUT: /eos/project/i/iphctau/public/gsaha/TrackerUpgrade/OTPhysicsOuput/Output
+
+# signal freq
+FS: 5000 #Hz
+
+# out-tag
+OUTTAG: 5kHz__1_sigma__Ladder__lpGBT_v1__12_Mods__p15

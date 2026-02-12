@@ -1,0 +1,13 @@
+# config for OT Physics
+
+# Input file
+INPUT_FILE: /eos/project/i/iphctau/public/gsaha/TrackerUpgrade/OTPhysicsPh2acfFlatRootFiles/run_000162_Board000__KIRA__lpGBT_v1__1_Mods__p15__OTPhysics__Flat.root
+
+# Outdir
+OUTPUT: /eos/project/i/iphctau/public/gsaha/TrackerUpgrade/OTPhysicsOuput/Output
+
+# signal freq
+FS: 100000 #Hz
+
+# out-tag
+OUTTAG: 100kHz__4_sigma__KIRA__lpGBT_v1__1_Mods__p15
