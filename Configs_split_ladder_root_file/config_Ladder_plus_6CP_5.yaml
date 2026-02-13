@@ -4,6 +4,10 @@
 # Ph2ACF output contains more than one OpticalGroup
 INPUT_FILE    : /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_3/Results.root
 
+# Monitor histogram file
+DQM_FILE      : /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/Run_3/MonitorDQM_2025-09-03_14-07-41.root
+
+
 # Where to save the output ROOT files per OpticalGroup
 OUTPUT_PATH   : /Users/gsaha/Work/IPHC/TrackerUpgrade/Output/Split_output
 
@@ -30,3 +34,14 @@ MODULE_POS:
   OpticalGroup_9  : 2S_18_5_NCP-10004
   OpticalGroup_10 : 2S_18_6_AAC-10006
   OpticalGroup_11 : 2S_18_5_NCP-10003
+
+EXTRA_INFO:
+  Setup        : "Ph2-ACF"
+  RunNo        : 1
+  ResultFolder : Results
+  Location     : Strasbourg
+  Operator     : IPHC
+  RunType      : mod_int
+  StationName  : Coldbox
+  LadderSlot   : 1
+  Comment      : OK
