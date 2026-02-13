@@ -4,16 +4,22 @@ import awkward as ak
 import logging
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-from matplotlib.colors import Normalize, ListedColormap
+from matplotlib.colors import Normalize, ListedColormap, LogNorm
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
+import matplotlib.cm as cm
+
 import mplhep as hep
 import numpy as np
 hep.style.use("CMS")
 
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 from Fitter import Fitter
 
 logger = logging.getLogger('main')
+
+
 
 class ColorFormatter(logging.Formatter):
     COLORS = {
@@ -33,7 +39,6 @@ class ColorFormatter(logging.Formatter):
         fmt = "%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
         formatter = logging.Formatter(fmt, '%Y-%m-%d:%H:%M:%S')
         return formatter.format(record)
-
 
 def setup_logger():
     # Create a logger
@@ -55,35 +60,35 @@ def setup_logger():
     return logger
 
 
-def processor(filename: str, treename: str):
-    def build_record(prefix):
-        prefix_keys = [k for k in keys if k.startswith(prefix)]
-        arrays = {k[len(prefix):]: tree[k].array() for k in prefix_keys}
-        return ak.zip(arrays, depth_limit=1)
-    
-    fptr = uproot.open(filename)
-    tree = fptr[treename]
 
-    keys = list(tree.keys())
-    if "event" not in keys:
-        raise RuntimeError("No event branch in the TTree")
-    event = tree["event"].array()
+def processor(filename: str, treename: str, start=None, stop=None):
+    with uproot.open(filename) as fptr:
+        tree = fptr[treename]
 
-    board   = build_record("board_")
-    hybrid  = build_record("hybrid_")
-    cluster = build_record("cluster_")
-    stub    = build_record("stub_")
+        arrays = tree.arrays(entry_start=start, entry_stop=stop)
+        keys = arrays.fields
 
-    # Combine into single record
-    events = ak.zip({
-        "event": event,
-        "board": board,
-        "hybrid": hybrid,
-        "cluster": cluster,
-        "stub": stub
-    }, depth_limit=1)
+        def build_record(prefix):
+            return ak.zip(
+                {k[len(prefix):]: arrays[k] for k in keys if k.startswith(prefix)},
+                depth_limit=1
+            )
+
+        if "event" not in keys:
+            raise RuntimeError("No event branch in the TTree")
+
+        events = ak.zip({
+            "event"  : arrays["event"],
+            "board"  : build_record("board_"),
+            "hybrid" : build_record("hybrid_"),
+            "hit"    : build_record("hit_"),
+            "cluster": build_record("cluster_"),
+            "stub"   : build_record("stub_"),
+        }, depth_limit=1)
 
     return events
+
+
 
 
 def plot_basic_settings():
@@ -91,7 +96,7 @@ def plot_basic_settings():
             "heplogo": "Internal",
             "logoloc": 0,
             "histtype": "step",
-            "linewidth": 0,
+            "linewidth": 0.7,
             "marker": "o",
             "markersize": 1.2,
             "capsize": 0.2,
@@ -101,6 +106,8 @@ def plot_basic_settings():
             "markerstyles": ['o', 's', 'D', '*', '^', 'v', 'P', 'X', '<', '>'],
             "colors": ["#165a86","#cc660b","#217a21","#a31e1f","#6e4e92","#6b443e","#b85fa0","#666666","#96971b","#1294a6","#8c1c62","#144d3a"],
             "linestyles": ["-","--","-.",":","(0, (3, 1))", "(0, (3, 1, 1, 1))","(0, (5, 5))","(0, (1, 1))","(0, (6, 2))","(0, (4, 2, 1, 2))"]}
+
+
 
 
 def plot_basic(x = None, data_dict = None,
@@ -136,6 +143,7 @@ def plot_basic(x = None, data_dict = None,
     tick_offset = kwargs.get("tick_offset", 0.1)
     legend_labels = kwargs.get("legs", None)
     density = kwargs.get("density", False)
+    normfactor = kwargs.get("normfactor", 1.0)
     
     fig, ax = plt.subplots(figsize=basics["size"])
     hep.cms.text(basics["heplogo"], loc=basics["logoloc"]) # CMS
@@ -147,7 +155,7 @@ def plot_basic(x = None, data_dict = None,
         data = np.array(data)
         _val = data if data.ndim == 1 else data[:,0]
         if density == True:
-            _val = _val/float(np.sum(_val))
+            _val = _val/normfactor
         err  = np.zeros_like(_val) if data.ndim == 1 else data[:,1]
         val  = np.gradient(_val) if dograd else _val 
         ax.errorbar(x,
@@ -228,10 +236,11 @@ def plot_basic(x = None, data_dict = None,
     
     plt.tight_layout()
     fig.savefig(f"{outdir}/{name}.png", dpi=300, bbox_inches="tight")
-    logger.info(f"Plot saved : {outdir}/{name}.png")
+    logger.info(f"    >>> Plot saved : {outdir}/{name}.png")
     plt.close()
 
 
+    
 
 def hist_basic(bins = None, data_dict = None,
                title = 'default', name = 'default',
@@ -278,8 +287,209 @@ def hist_basic(bins = None, data_dict = None,
     
     plt.tight_layout()
     fig.savefig(f"{outdir}/{name}.png", dpi=300, bbox_inches="tight")
-    logger.info(f"Plot saved : {outdir}/{name}.png")
+    logger.info(f"    >>> Plot saved : {outdir}/{name}.png")
     plt.close()
+
+
+
+
+def hist_cbc_group(data_dict = None,
+                   title = "",
+                   name = "",
+                   **kwargs):
+    
+    basics = plot_basic_settings()
+
+    outdir = kwargs.get("outdir", "../Output")
+    ylim = kwargs.get("ylim", basics["ylim"])
+    linewidth = kwargs.get("linewidth", basics["linewidth"]) 
+    xlabel = kwargs.get("xlabel", "var")
+    ylabel = kwargs.get("ylabel", "var")
+    colors = kwargs.get("colors", basics["colors"])
+    linestyles = kwargs.get("linestyles", basics["linestyles"])
+    legend_labels = kwargs.get("legs", None)
+    density = kwargs.get("density", False)
+    logy = kwargs.get("logy", False)
+    forpos = kwargs.get("forpos", False)
+    bins = kwargs.get("bins", None)
+    gap = kwargs.get("gap", 254)
+    
+    fig, ax = plt.subplots(figsize=(20,8))
+    hep.cms.text(basics["heplogo"], loc=basics["logoloc"]) # CMS
+
+    channels_per_cbc = gap
+    n_cbc = 8
+    total_channels = channels_per_cbc * n_cbc
+
+    
+    if forpos:
+        bins = np.arange(total_channels + 1)
+    else:
+        bins = bins
+
+        
+    for i, (cbc, vals) in enumerate(data_dict.items()):
+        base = i * channels_per_cbc
+
+        ax.hist(
+            vals["bottom"] + base,
+            bins=bins,
+            histtype="step",
+            linewidth=linewidth,
+            color=colors[0],
+            log = logy,
+            label="bottom" if i == 0 else ""
+        )
+
+        ax.hist(
+            vals["top"] + base,
+            bins=bins,
+            histtype="step",
+            linewidth=linewidth,
+            linestyle="dashed",
+            color=colors[1],
+            log = logy,
+            label="top" if i == 0 else ""
+        )
+
+    # CBC boundaries
+    for i in range(1, n_cbc):
+        ax.axvline(i * channels_per_cbc, color="k", alpha=0.2)
+
+    # CBC labels centered
+    ax.set_xticks(
+        [(i + 0.5) * channels_per_cbc for i in range(n_cbc)]
+    )
+    ax.set_xticklabels([f"CBC_{i}" for i in range(n_cbc)])
+
+    ax.set_xlim(0, total_channels)
+    ax.set_xlabel(f'{xlabel} [0 to {gap} /CBC/Sensor]')
+    ax.set_ylabel(ylabel)
+    ax.set_title(f"{title}", fontsize=14, loc='right')
+    
+    ax.legend()
+
+    plt.tight_layout()
+    fig.savefig(f"{outdir}/{name}.png", dpi=300, bbox_inches="tight")
+    logger.info(f"    >>> Plot saved : {outdir}/{name}.png")
+    plt.close()
+
+    
+
+    
+
+def hist_2D(xbins = None, ybins = None,
+            xdata = None, ydata = None,
+            title = 'default', name = 'default',
+            **kwargs):
+    basics = plot_basic_settings()
+
+    outdir = kwargs.get("outdir", "../Output")
+    xlabel = kwargs.get("xlabel", "var")
+    ylabel = kwargs.get("ylabel", "var")
+    setYlabels = kwargs.get("setYlabels", None) # CBC / Strip
+    flipX = kwargs.get("flipX", False)
+    vmin = kwargs.get("vmin", None)
+    vmax = kwargs.get("vmax", None)
+    #wt = kwargs.get("wt", 1.0)
+
+    xticklabels = kwargs.get("xticklabels", ["Hybrid 0", "hybrid 1"])
+    
+    norm = None
+    if vmin is not None:
+        norm = Normalize(vmin=vmin, vmax=vmax)
+    
+    fig, ax = plt.subplots(figsize=basics["size"], constrained_layout=True)
+    #fig, ax = plt.subplots(figsize=basics["size"])
+    hep.cms.text(basics["heplogo"], loc=basics["logoloc"]) # CMS
+
+
+    # Shrink width: [left, bottom, width, height]
+    #ax.set_position([0.10, 0.12, 0.70, 0.78])
+
+    cmap = cm.get_cmap("viridis").copy()
+    cmap.set_over("red")        # values > vmax
+    cmap.set_under("white")     # optional: values < vmin
+
+    
+    h, xedges, yedges, im = ax.hist2d(xdata, ydata,
+                                      bins = [xbins, ybins],
+                                      cmap=cmap,
+                                      norm = norm,
+                                      #weights=wt
+                                      )
+
+    ax.set_xlabel(xlabel)
+    #ax.set_ylabel(ylabel)
+
+    if setYlabels == "Strip":
+        n_cbc = 8
+        bins_per_cbc = 254
+        total_bins = n_cbc * bins_per_cbc
+        y_centers = (np.arange(n_cbc) + 0.5) * bins_per_cbc
+        
+    elif setYlabels == "CBC":
+        n_cbc = 8
+        bins_per_cbc = 1
+        total_bins = n_cbc * bins_per_cbc
+        y_centers = np.arange(n_cbc) * bins_per_cbc
+        
+    cbc_edges = np.arange(-0.5, n_cbc * bins_per_cbc + 0.5, bins_per_cbc)
+
+    right_labels = [f"CBC{i}" for i in range(n_cbc)]
+    left_labels = [f"CBC{i}" for i in range(n_cbc - 1, -1, -1)]
+
+    x_labels = xticklabels #["Hb0", "Hb1"]
+    
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(x_labels)
+    
+    ax.set_yticks(y_centers)
+    ax.set_yticklabels(left_labels)
+
+    # Right axis
+    #ax_r = ax.twinx()
+    #ax_r.tick_params(
+    #    axis="y",
+    #    direction="in",
+    #    pad=-20,        # <-- THIS is critical
+    #    length=6
+    #)
+    #ax_r.set_ylim(ax.get_ylim())
+    #ax_r.set_yticks(y_centers)
+    #ax_r.set_yticklabels(right_labels)
+    
+    # Optional cosmetics
+    #ax_r.tick_params(axis="y", direction="in")
+    #ax.tick_params(axis="y", direction="in")
+
+    
+    # Enable ticks on the right
+    ax.tick_params(axis="y", which="both", right=True, labelright=True)
+    # Set right-side labels explicitly
+    ax.set_yticklabels(right_labels, minor=False)    
+
+    if flipX:
+        ax.invert_xaxis()
+
+    #ax.grid(axis="y", which="major", linewidth=0.7, alpha=0.4)
+    for y in cbc_edges:
+        ax.axhline(y, linewidth=0.7, alpha=0.7, color='w', ls='--')
+
+    ax.set_title(f"{title}", fontsize=14, loc='right')
+
+    #cbar = fig.colorbar(im, ax=ax, label="Counts")
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="4%", pad=1.0)
+
+    cbar = fig.colorbar(im, cax=cax, extend="max")
+    cbar.ax.tick_params(labelsize=12)
+    
+    #plt.tight_layout()
+    fig.savefig(f"{outdir}/{name}.png", dpi=300, bbox_inches="tight")
+    logger.info(f"    >>> Plot saved : {outdir}/{name}.png")
+    plt.close()
+
     
     
 
@@ -351,10 +561,11 @@ def plot_heatmap(data = None, title = 'default', name = 'default', **kwargs):
     ax.tick_params(direction="in", top=False, right=False, labelsize=12, length=3)
     plt.tight_layout()
     fig.savefig(f"{outdir}/{name}.png", dpi=300, bbox_inches="tight")
-    logger.info(f"Plot saved : {outdir}/{name}.png")
+    logger.info(f"    >>> Plot saved : {outdir}/{name}.png")
     plt.close()
     
 
+    
 
 def plot_colormesh(x = None,
                    y = None,
@@ -393,6 +604,6 @@ def plot_colormesh(x = None,
 
     plt.tight_layout()
     fig.savefig(f"{outdir}/{name}.png", dpi=300, bbox_inches="tight")
-    logger.info(f"Plot saved : {outdir}/{name}.png")
+    logger.info(f"    >>> Plot saved : {outdir}/{name}.png")
     plt.close()
     
