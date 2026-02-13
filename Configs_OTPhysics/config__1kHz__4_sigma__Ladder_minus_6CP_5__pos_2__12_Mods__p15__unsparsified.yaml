@@ -1,0 +1,16 @@
+# config for OT Physics
+
+# Ladder or KIRA
+IS_LADDER: yes
+
+# Input file
+INPUT_FILE: /eos/project/i/iphctau/public/gsaha/TrackerUpgrade/OTPhysicsPh2acfFlatRootFiles/run_000141_Board000__minus_6CP_5__pos_2__1kHz__sigma_4__unsparsified__Flat.root
+
+# Outdir
+OUTPUT: /eos/project/i/iphctau/public/gsaha/TrackerUpgrade/OTPhysicsOuput/Output
+
+# signal freq
+FS: 1000 #Hz
+
+# out-tag
+OUTTAG: 1kHz__4_sigma__Ladder_minus_6CP_5__pos_2__12_Mods__p15__unsparsified

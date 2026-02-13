@@ -1,0 +1,16 @@
+# config for OT Physics
+
+# Ladder or KIRA
+IS_LADDER: no
+
+# Input file
+INPUT_FILE: /afs/cern.ch/work/g/gsaha/public/IPHC/Work/TrackerUpgrade/LadderIntegrationOT2S/modules/EventContainer/test/flat_cpp.root
+
+# Outdir
+OUTPUT: /eos/project/i/iphctau/public/gsaha/TrackerUpgrade/OTPhysicsOuput/Output
+
+# signal freq
+FS: 5000 #Hz
+
+# out-tag
+OUTTAG: 5kHz__1_sigma__KIRA__lpGBT_v1__1_Mods__p15__unsparsified__v2

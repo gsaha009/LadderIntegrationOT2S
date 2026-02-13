@@ -16,7 +16,7 @@ from scipy.ndimage import gaussian_filter1d
 from scipy.signal import find_peaks
 
 from otutil import setup_logger, processor
-from otutil import plot_basic, hist_basic, plot_heatmap, plot_colormesh
+from otutil import plot_basic, hist_basic, plot_heatmap, plot_colormesh, hist_2D, hist_cbc_group
 
 
 def get_correlation(cls_hb0, cls_hb1):
@@ -85,7 +85,7 @@ def main(args):
 
     
     # ==>>> Process Events ==>>>
-    events = processor(infile, "Events")
+    events = processor(infile, "Events", start=0, stop=500000)
 
 
     OG = int(np.sort(np.unique(ak.to_numpy(ak.flatten(events.cluster.opticalGroupId))))[-1])
@@ -161,7 +161,7 @@ def main(args):
             "hb1": get_ncls(events.cluster.hybridId == hb1_id),
         }
     }
-    hist_basic(bins      = [0., 150.0, 150], # [begin, end, nbins]
+    hist_basic(bins      = [0., 1000.0, 1001], # [begin, end, nbins]
                data_dict = ncls_dict_hbs['OG'],
                title     = f"nClusters_per_hb",
                name      = f"nClusters_per_hb",
@@ -184,7 +184,7 @@ def main(args):
         }
     }
     
-    hist_basic(bins      = [0.,256.,256], # [begin, end, nbins]
+    hist_basic(bins      = [0.,1000.,1001], # [begin, end, nbins]
                data_dict = ncls_dict_sensors['OG'],
                title     = f"nClusters_per_sensor",
                name      = f"nClusters_per_sensor",
@@ -211,6 +211,7 @@ def main(args):
             f"hb_{hb1_id}": {f'CBC_{i}' : [] for i in range(8)}
         }
     }
+
     for pair in pairs:
         cls = events.cluster[pair[0]:pair[1], :]
         for iopt in range(OG,OG+1):
@@ -249,22 +250,163 @@ def main(args):
                #ylim      = [0, 0.0045],
                fit       = False,
                fitmodel  = 'poly2')
+
+
+
+
+
+
+    ncls = np.median(ak.to_numpy(ak.num(events.cluster.hybridId, axis=1)))
+    cls_per_event_wt = ak.ones_like(events.cluster.hybridId) #/float(ncls)
+    
+    
+    mask_bottom = events.cluster.fromWhichSensor == 0
+    cls_bottom = events.cluster[mask_bottom]
+    #cls_bottom = cls_bottom[cls_bottom.width < 7]
+    _pos_bottom = ak.to_numpy(ak.flatten(cls_bottom.address)).astype(np.int64)
+    hbid_bottom = ak.to_numpy(ak.flatten(cls_bottom.hybridId % hb0_id))
+    chipid_bottom = ak.to_numpy(ak.flatten(cls_bottom.chipId)).astype(np.int64)
+    pos_bottom = _pos_bottom + chipid_bottom*254
+    #pos_hbid = ak.to_numpy(ak.concatenate([pos, hbid], axis=1))
+    width_bottom = ak.to_numpy(ak.flatten(cls_bottom.width))
+        
+    #cls_per_event_brdcst, _ = ak.broadcast_arrays(cls_per_event, mask_bottom)
+    #wt = ak.to_numpy(ak.flatten(cls_per_event_brdcst[mask_bottom]))
+    wt = ak.to_numpy(ak.flatten(cls_per_event_wt[mask_bottom])).astype(np.float64)
+
+        
+    hist_2D(xbins = [-0.5, 0.5, 1.5],
+            ybins = np.arange(-0.5, 2032.5),
+            xdata = hbid_bottom,
+            ydata = pos_bottom,
+            title = f"clspos_hbid_map_bottom",
+            name = f"clspos_hbid_map_bottom",
+            xlabel = 'hybrid-id',
+            ylabel = 'cluster position',
+            outdir    = output,
+            setYlabels='Strip',
+            #flipX = flipX,
+            #vmin = 0, vmax = 800,
+            wt=wt)
+
+    hist_2D(xbins = [-0.5, 0.5, 1.5],
+            ybins = np.arange(-0.5, 8.5),
+            xdata = hbid_bottom,
+            ydata = chipid_bottom,
+            title = f"chipid_hbid_map_bottom",
+            name = f"chipid_hbid_map_bottom",
+            xlabel = 'hybrid-id',
+            ylabel = 'chip-id',
+            outdir    = output,
+            setYlabels='CBC',
+            #flipX = flipX,
+            #vmin = 0, vmax = 80000,
+            wt=wt)
+       
+
+
+    mask_top = events.cluster.fromWhichSensor == 1
+    cls_top = events.cluster[mask_top]
+    #cls_top = cls_top[cls_top.width < 7]
+    pos_top = ak.to_numpy(ak.flatten(cls_top.address)).astype(np.int64)
+    hbid_top = ak.to_numpy(ak.flatten(cls_top.hybridId % hb0_id))
+    chipid_top = ak.to_numpy(ak.flatten(cls_top.chipId)).astype(np.int64)
+    pos_top = pos_top + chipid_top*254
+    #pos_hbid = ak.to_numpy(ak.concatenate([pos, hbid], axis=1))
+    
+    #from IPython import embed; embed(); exit()
+    #cls_per_event_brdcst, _ = ak.broadcast_arrays(cls_per_event, mask_top)
+    #wt = ak.to_numpy(ak.flatten(cls_per_event_brdcst[mask_top]))
+    wt = ak.to_numpy(ak.flatten(cls_per_event_wt[mask_top])).astype(np.float64)
+        
+    hist_2D(xbins = [-0.5, 0.5, 1.5],
+            ybins = np.arange(-0.5, 2032.5),
+            xdata = hbid_top,
+            ydata = pos_top,
+            title = f"clspos_hbid_map_top",
+            name = f"clspos_hbid_map_top",
+            xlabel = 'hybrid-id',
+            ylabel = 'cluster position',
+            outdir    = output,
+            setYlabels='Strip',
+            #flipX = flipX,
+            #vmin = 0, vmax = 800,
+            wt=wt)
+
+    hist_2D(xbins = [-0.5, 0.5, 1.5],
+            ybins = np.arange(-0.5, 8.5),
+            xdata = hbid_top,
+            ydata = chipid_top,
+            title = f"chipid_hbid_map_top",
+            name = f"chipid_hbid_map_top",
+            xlabel = 'hybrid-id',
+            ylabel = 'chip-id',
+            outdir    = output,
+            setYlabels='CBC',
+            #flipX = flipX,
+            #vmin = 0, vmax = 80000,
+            wt=wt)
+
+
+
+
+
+    get_cls_pos = lambda cls: ak.to_numpy(ak.flatten(cls.address))
+    cls_pos_og = {
+        'Hybrid_0': {f'CBC_{icbc}':{} for icbc in range(8)},
+        'Hybrid_1': {f'CBC_{icbc}':{} for icbc in range(8)},
+    }
+    for hb_key, hb_val in {'Hybrid_0': 2*OG, 'Hybrid_1': (2*OG + 1)}.items():
+        cls_hb = events.cluster[events.cluster.hybridId == hb_val]
+        for icbc in range(8):
+            cls_cbc = cls_hb[cls_hb.chipId == icbc]
+            cls_pos = {
+                "bottom": get_cls_pos(cls_cbc[(cls_cbc.fromWhichSensor == 0)]),
+                "top": get_cls_pos(cls_cbc[(cls_cbc.fromWhichSensor == 1)]),
+            }
+            cls_pos_og[hb_key][f'CBC_{icbc}'] = cls_pos
+
+    #from IPython import embed; embed()
+    hist_cbc_group(cls_pos_og['Hybrid_0'],
+                   outdir = output,
+                   name = f'hist_clspos_per_cbc_hb0',
+                   title = f'cluster position (Hb0)',
+                   xlabel = "cluster position (strip)",
+                   ylabel = "no. of clusters")
+    hist_cbc_group(cls_pos_og['Hybrid_1'],
+                   outdir = output,
+                   name = f'hist_clspos_per_cbc_hb1',
+                   title = f'cluster position (Hb1)',
+                   xlabel = "cluster position (strip)",
+                   ylabel = "no. of clusters")
+
+
+
+
+
+
+
+
+    
+
+
     
 
     # ========================================================= #
     # ==>>> Extract hidden frequencies from Clusters            #
     # ========================================================= #
     nclusters = ak.num(events.cluster.opticalGroupId, axis=1)
-    nclusters_m1p1 = ak.to_numpy(ak.where(nclusters > 0, 1, -1))
-
+    #nclusters_m1p1 = ak.to_numpy(ak.where(nclusters > 0, 1, -1))
+    nclusters_m1p1 = ak.to_numpy(2*nclusters/np.max(nclusters) - 1)
+    
     fs = config.get("FS") #244000  # Hz
     logger.warning(f"Check carefully ==> fs is {fs} Hz")
     f, t, Sxx = spectrogram(
         nclusters_m1p1,
         fs=fs,
         window='hann',
-        nperseg=300000,
-        noverlap=30000,
+        nperseg=10240,
+        noverlap=int(0.85*10240),
         scaling='density',
         mode='magnitude'
     )
