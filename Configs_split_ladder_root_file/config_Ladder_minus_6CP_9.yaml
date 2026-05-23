@@ -1,0 +1,68 @@
+# --- CONFIG --- #
+# As usual, do not use TAB #
+
+
+# Ph2ACF output contains more than one OpticalGroup
+INPUT_FILE: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/AuxSplitMay06/Results_Pos_1/Results.root
+
+# Monitor histogram file
+DQM_FILE: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/AuxSplitMay06/Results_Pos_1/MonitorDQM.root
+
+# IV csv files for all PS channels
+IV_FILE_DIR: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/AuxSplitMay06/IV_05_06
+
+# Env temp, humidity etc
+ENV_MONITOR_FILE: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/AuxSplitMay06/sensor_05_06.csv
+
+# PS monitoring
+PS_MONITOR_FILE: /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/AuxSplitMay06/monitoring_V_A_2026_05_06.csv
+# [0,12] for Ladder-1 and for Ladder-2 [12,24]
+PS_CHANNELS: [0,12] 
+
+
+
+# Where to save the output ROOT files per OpticalGroup
+OUTPUT_PATH   : /Users/gsaha/Work/IPHC/TrackerUpgrade/Output/Split_output
+
+
+
+# Ladder Information (Same as DCA)
+# e.g. plus_<nCoolingPoints>CP_<#Ladder>
+LADDER   : minus_6CP_9
+
+
+
+# CO2 cooling temperature
+# e.g. "+15C" / "0C" / "-30C"
+COOLING_TEMP : "-30C"
+
+
+
+# Module positions
+# BE CAREFUL! These Module IDs	will be	added as ModuleName inside the ROOT files for each Optical Group
+MODULE_POS:
+  OpticalGroup_0  : 2S_18_5_BRN-01001
+  OpticalGroup_1  : 2S_18_6_NCP-10006
+  OpticalGroup_2  : 2S_18_6_NCP-10007
+  OpticalGroup_3  : 2S_18_6_NCP-10012
+  OpticalGroup_4  : 2S_18_6_NCP-10003
+  OpticalGroup_5  : 2S_18_6_NCP-10014
+  OpticalGroup_6  : 2S_18_6_NCP-10015
+  OpticalGroup_7  : 2S_18_6_NCP-10023
+  OpticalGroup_8  : 2S_18_6_NCP-10022
+  OpticalGroup_9  : 2S_18_6_NCP-10011
+  OpticalGroup_10 : 2S_18_6_NCP-10019
+  OpticalGroup_11 : 2S_18_6_NCP-10021
+
+
+
+EXTRA_INFO:
+  Setup        : "Ph2-ACF"
+  RunNo        : 1
+  ResultFolder : Results
+  Location     : Strasbourg
+  Operator     : IPHC
+  RunType      : mod_int
+  StationName  : Coldbox
+  LadderSlot   : 1
+  Comment      : OK
