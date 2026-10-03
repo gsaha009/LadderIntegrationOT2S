@@ -56,23 +56,20 @@ def main(args):
     logger = setup_logger()
     logger.info(f"date-time: {dttag}")
 
-    config = None
-    if not os.path.exists(args.config):
-        raise RuntimeError(f"{args.config} does not exist")
-    else:
-        with open(args.config, 'r') as _c:
-            config = yaml.safe_load(_c)
+    #config = None
+    #if not os.path.exists(args.config):
+    #    raise RuntimeError(f"{args.config} does not exist")
+    #else:
+    #    with open(args.config, 'r') as _c:
+    #        config = yaml.safe_load(_c)
     
-    infile = config.get('INPUT_FILE')
+    infile = args.get('INPUT_FILE')
     if os.path.exists(infile):
         logger.info(f"Input file {infile} found")
     else:
         raise RuntimeError(f"Input file {infile} not found")
 
-    if args.tag != "":
-        output = f"{config.get('OUTPUT')}__{args.tag}"
-    else:
-        output = f"{config.get('OUTPUT')}__{config.get('OUTTAG')}"
+    output = f"{config.get('OUTPUT')}__{config.get('OUTTAG')}"
 
     if os.path.exists(output):
         logger.info(f"Output dir {output} found")
@@ -84,7 +81,7 @@ def main(args):
     # ==>>> Process Events ==>>>
     events = processor(infile, "Events")
 
-    from IPython import embed; embed(); exit()
+    #from IPython import embed; embed(); exit()
     
 
     #OG = int(np.sort(np.unique(ak.to_numpy(ak.flatten(events.cluster.opticalGroupId))))[-1])
@@ -438,8 +435,17 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Plotter')
-    parser.add_argument('-c', '--config', type=str, required=True, help="yaml configs to be used")
-    parser.add_argument('-t', '--tag', type=str, required=False, default="", help="<output_dir>_<tag>")
+    parser.add_argument('-i', '--INPUT_FILE', type=str, required=True, help="input file")
+    parser.add_argument('-o', '--OUTPUT',
+                        type=str, required=False,
+                        default = '/eos/project/i/iphctau/public/gsaha/TrackerUpgrade/OTPhysicsOuput/Output',
+                        help="input file")
+    parser.add_argument('-s', '--FS',
+                        type = int,
+                        required = False,
+                        default = 1000,
+                        help = 'sampling freq')
+    parser.add_argument('-t', '--OUTTAG', type=str, required=True, default="", help="<output_dir>")
    
     args = parser.parse_args()
         
