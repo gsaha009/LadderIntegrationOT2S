@@ -44,125 +44,185 @@ source setup.sh
   - How to run?
     - The main script is `main.py`
     - two mandatory inputs are `Ph2ACF Calibration Results directory` and `Ph2ACF VTRXoff Results directory`
-      - e.g.
       ```bash
-      python3 main.py \
-      	      -i /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/FinalTest/TB2SLadders__pos_1__TB2S_Ladder_minus_6CP_9__pos_2__TB2S_Ladder_plus_5CP_4__+15C__2SfullTest__2026-10-02_10_58_18 \
-	      -ivtrx /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/FinalTest/TB2SLadders__pos_1__TB2S_Ladder_minus_6CP_9__pos_2__TB2S_Ladder_plus_5CP_4__+15C__vtrxoff__2026-10-02_10_50_02 \
-	      -s #to split the merged potato compatible ROOT file \
-	      -qccfg "bla.yaml" #default is "qc_config.yaml"
+      python3 main.py -i /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/FinalTest/TB2SLadders__pos_1__TB2S_Ladder_minus_6CP_9__pos_2__TB2S_Ladder_plus_5CP_4__+15C__2SfullTest__2026-10-02_10_58_18 -ivtrx /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/FinalTest/TB2SLadders__pos_1__TB2S_Ladder_minus_6CP_9__pos_2__TB2S_Ladder_plus_5CP_4__+15C__vtrxoff__2026-10-02_10_50_02 -s [#to split the merged potato compatible ROOT file] -qccfg "bla.yaml" [#default is "qc_config.yaml"]
       ```
     - The two `Ph2ACF` Results-dir must have the folliwng structure:
-        - ```bash
-	  TB2SLadders__pos_1__TB2S_Ladder_<lad-1-id>__pos_2__TB2S_Ladder_<lad-2-id>__<cooling>__<calibname>__<datetime>**
-	  # e.g.
-	  # lad-1-id  : minus_6CP_9
-	  # lad-2-id  : plus_5CP_4
-	  # cooling   : +15C or -30C
-	  # calibname : 2SfullTest / 2SquickTest / vtrxoff
-	  # datetime  : 2026-10-02_10_50_02
-	  ```
-	- ```bash
-	  TB2SLadders__pos_1__TB2S_Ladder_minus_6CP_9__pos_2__TB2S_Ladder_plus_5CP_4__+15C__vtrxoff__2026-10-02_10_50_02
-	  ├── IV
-	  │   └── iv_curves
-	  │       ├── 2S_18_5_BRN-01001_HV#1.csv
-	  |       ...	
-	  │       └── 2S_18_6_NCP-10023_HV#8.csv
-	  ├── LOG_MAIN_STEPS.csv
-	  ├── MonitorMarta.csv
-	  ├── MonitorPS.csv
-	  ├── Pos_1__TB2S_Ladder_minus_6CP_9
-	  │   ├── TB2S_Ladder_minus_6CP_9_ambient_vtrxoff_1.log
-	  │   └── ambient
-	  │       ├── MonitorResults
-	  │       │   └── MonitorDQM_2026-10-02_10-50-04.root
-	  │       ├── Results
-	  │       │   └── Run_0
-	  │       │       └── Results.root
-	  │       ├── RunNumbers.dat
-	  │       ├── logs
-	  │       │   ├── Ph2_ACF.log
-	  │       │   ├── Ph2_ACF_debug.log
-	  │       │   ├── Ph2_ACF_err.log
-	  │       │   ├── Ph2_ACF_fatal.log
-	  │       │   └── Ph2_ACF_warn.log
-	  │       └── myeasylog.log
-	  └── Pos_2__TB2S_Ladder_plus_5CP_4
-	      ├── TB2S_Ladder_plus_5CP_4_ambient_vtrxoff_2.log
-    	      └── ambient
-              ├── MonitorResults
-              │   └── MonitorDQM_2026-10-02_10-50-06.root
-              ├── Results
-              │   └── Run_0
-              │       └── Results.root
-              ├── RunNumbers.dat
-              ├── logs
-              │   ├── Ph2_ACF.log
-              │   ├── Ph2_ACF_debug.log
-              │   ├── Ph2_ACF_err.log
-              │   ├── Ph2_ACF_fatal.log
-              │   └── Ph2_ACF_warn.log
-              └── myeasylog.log
-	  ```
-	- ```bash
-	  TB2SLadders__pos_1__TB2S_Ladder_minus_6CP_9__pos_2__TB2S_Ladder_plus_5CP_4__+15C__2SfullTest__2026-10-02_10_58_18
-	  ├── Pos_1__TB2S_Ladder_minus_6CP_9
-	  │   ├── PreIntResults
-	  │   │   ├── 2S_18_5_BRN-01001
-	  │   │   │   ├── MonitorDQM_2025-12-15_11-27-48.root
-	  │   │   │   └── Results.root
-	  │   │   ├── 2S_18_6_NCP-10003
-	  │   │   │   ├── MonitorDQM_2026-01-12_12-39-01.root
-	  │   │   │   └── Results.root
-	  |   |   | ...
-	  │   │   └── 2S_18_6_NCP-10023
-	  │   │       ├── MonitorDQM_2026-01-13_15-19-14.root
-	  │   │       └── Results.root
-	  │   ├── TB2S_Ladder_minus_6CP_9_ambient_2SfullTest_1.log
-	  │   └── ambient
-	  │       ├── MonitorResults
-	  │       │   └── MonitorDQM_2026-10-02_10-58-20.root
-	  │       ├── Results
-	  │       │   └── Run_0
-	  │       │       └── Results.root
-	  │       ├── RunNumbers.dat
-	  │       ├── logs
-	  │       │   ├── Ph2_ACF.log
-	  │       │   ├── Ph2_ACF_debug.log
-	  │       │   ├── Ph2_ACF_err.log
-	  │       │   ├── Ph2_ACF_fatal.log
-	  │       │   └── Ph2_ACF_warn.log
-	  │       └── myeasylog.log
-	  └── Pos_2__TB2S_Ladder_plus_5CP_4
-    	      ├── PreIntResults
-    	      │   ├── 2S_18_6_KIT-10022
-    	      │   │   └── 2S_18_6_KIT-10022_2025-08-05_15h05m03s_+23C_2SfullTest_v6-16.root
-    	      │   ├── 2S_18_6_KIT-10023
-    	      │   │   └── 2S_18_6_KIT-10023_2025-08-01_14h01m05s_+24C_2SfullTest_v6-16.root
-	      |   | ...
-    	      │   ├── 2S_18_6_NCP-10009
-    	      │   │   ├── MonitorDQM_2026-01-14_09-11-27.root
-    	      │   │   └── Results.root
-    	      │   └── 2S_18_6_NCP-10010
-    	      │       ├── MonitorDQM_2026-03-20_11-26-10.root
-    	      │       └── Results.root
-    	      ├── TB2S_Ladder_plus_5CP_4_ambient_2SfullTest_2.log
-    	      └── ambient
-              	  ├── MonitorResults
-              	  │   └── MonitorDQM_2026-10-02_10-58-22.root
-              	  ├── Results
-              	  │   └── Run_0
-              	  │       └── Results.root
-             	  ├── RunNumbers.dat
-              	  ├── logs
-              	  │   ├── Ph2_ACF.log
-              	  │   ├── Ph2_ACF_debug.log
-              	  │   ├── Ph2_ACF_err.log
-              	  │   ├── Ph2_ACF_fatal.log
-              	  │   └── Ph2_ACF_warn.log
-              	  └── myeasylog.log
-	  ```
+        -
+	```bash
+	TB2SLadders__pos_1__TB2S_Ladder_<lad-1-id>__pos_2__TB2S_Ladder_<lad-2-id>__<cooling>__<calibname>__<datetime>
+	# e.g.
+	# lad-1-id  : minus_6CP_9
+	# lad-2-id  : plus_5CP_4
+	# cooling   : +15C or -30C
+	# calibname : 2SfullTest / 2SquickTest / vtrxoff
+	# datetime  : 2026-10-02_10_50_02
+	```
+	-
+	```bash
+TB2SLadders__pos_1__TB2S_Ladder_minus_6CP_9__pos_2__TB2S_Ladder_plus_5CP_4__+15C__vtrxoff__2026-10-02_10_50_02
+├── IV
+│   └── iv_curves
+│       ├── 2S_18_5_BRN-01001_HV#1.csv
+│       ├── 2S_18_6_KIT-10022_HV#13.csv
+│       ├── 2S_18_6_KIT-10023_HV#20.csv
+│       ├── 2S_18_6_KIT-10025_HV#24.csv
+│       ├── 2S_18_6_KIT-10026_HV#21.csv
+│       ├── 2S_18_6_KIT-10027_HV#22.csv
+│       ├── 2S_18_6_KIT-10028_HV#19.csv
+│       ├── 2S_18_6_KIT-10029_HV#18.csv
+│       ├── 2S_18_6_KIT-10030_HV#17.csv
+│       ├── 2S_18_6_KIT-10031_HV#16.csv
+│       ├── 2S_18_6_KIT-10033_HV#14.csv
+│       ├── 2S_18_6_NCP-10003_HV#5.csv
+│       ├── 2S_18_6_NCP-10006_HV#2.csv
+│       ├── 2S_18_6_NCP-10007_HV#3.csv
+│       ├── 2S_18_6_NCP-10009_HV#23.csv
+│       ├── 2S_18_6_NCP-10010_HV#15.csv
+│       ├── 2S_18_6_NCP-10011_HV#10.csv
+│       ├── 2S_18_6_NCP-10012_HV#4.csv
+│       ├── 2S_18_6_NCP-10014_HV#6.csv
+│       ├── 2S_18_6_NCP-10015_HV#7.csv
+│       ├── 2S_18_6_NCP-10019_HV#11.csv
+│       ├── 2S_18_6_NCP-10021_HV#12.csv
+│       ├── 2S_18_6_NCP-10022_HV#9.csv
+│       └── 2S_18_6_NCP-10023_HV#8.csv
+├── LOG_MAIN_STEPS.csv
+├── MonitorMarta.csv
+├── MonitorPS.csv
+├── Pos_1__TB2S_Ladder_minus_6CP_9
+│   ├── TB2S_Ladder_minus_6CP_9_ambient_vtrxoff_1.log
+│   └── ambient
+│       ├── MonitorResults
+│       │   └── MonitorDQM_2026-10-02_10-50-04.root
+│       ├── Results
+│       │   └── Run_0
+│       │       └── Results.root
+│       ├── RunNumbers.dat
+│       ├── logs
+│       │   ├── Ph2_ACF.log
+│       │   ├── Ph2_ACF_debug.log
+│       │   ├── Ph2_ACF_err.log
+│       │   ├── Ph2_ACF_fatal.log
+│       │   └── Ph2_ACF_warn.log
+│       └── myeasylog.log
+└── Pos_2__TB2S_Ladder_plus_5CP_4
+    ├── TB2S_Ladder_plus_5CP_4_ambient_vtrxoff_2.log
+    └── ambient
+        ├── MonitorResults
+        │   └── MonitorDQM_2026-10-02_10-50-06.root
+        ├── Results
+        │   └── Run_0
+        │       └── Results.root
+        ├── RunNumbers.dat
+        ├── logs
+        │   ├── Ph2_ACF.log
+        │   ├── Ph2_ACF_debug.log
+        │   ├── Ph2_ACF_err.log
+        │   ├── Ph2_ACF_fatal.log
+        │   └── Ph2_ACF_warn.log
+        └── myeasylog.log
+	```
+	-
+	```bash
+TB2SLadders__pos_1__TB2S_Ladder_minus_6CP_9__pos_2__TB2S_Ladder_plus_5CP_4__+15C__2SfullTest__2026-10-02_10_58_18
+├── Pos_1__TB2S_Ladder_minus_6CP_9
+│   ├── PreIntResults
+│   │   ├── 2S_18_5_BRN-01001
+│   │   │   ├── MonitorDQM_2025-12-15_11-27-48.root
+│   │   │   └── Results.root
+│   │   ├── 2S_18_6_NCP-10003
+│   │   │   ├── MonitorDQM_2026-01-12_12-39-01.root
+│   │   │   └── Results.root
+│   │   ├── 2S_18_6_NCP-10006
+│   │   │   ├── MonitorDQM_2026-01-12_14-57-44.root
+│   │   │   └── Results.root
+│   │   ├── 2S_18_6_NCP-10007
+│   │   │   ├── MonitorDQM_2026-01-12_14-28-29.root
+│   │   │   └── Results.root
+│   │   ├── 2S_18_6_NCP-10011
+│   │   │   ├── MonitorDQM_2026-01-13_11-00-25.root
+│   │   │   └── Results.root
+│   │   ├── 2S_18_6_NCP-10012
+│   │   │   ├── MonitorDQM_2026-01-12_14-01-11.root
+│   │   │   └── Results.root
+│   │   ├── 2S_18_6_NCP-10014
+│   │   │   ├── MonitorDQM_2026-01-12_10-55-58.root
+│   │   │   └── Results.root
+│   │   ├── 2S_18_6_NCP-10015
+│   │   │   ├── MonitorDQM_2026-01-12_10-10-43.root
+│   │   │   └── Results.root
+│   │   ├── 2S_18_6_NCP-10019
+│   │   │   ├── MonitorDQM_2026-01-13_12-21-16.root
+│   │   │   └── Results.root
+│   │   ├── 2S_18_6_NCP-10021
+│   │   │   ├── MonitorDQM_2026-01-13_13-32-22.root
+│   │   │   └── Results.root
+│   │   ├── 2S_18_6_NCP-10022
+│   │   │   ├── MonitorDQM_2026-01-13_14-50-57.root
+│   │   │   └── Results.root
+│   │   └── 2S_18_6_NCP-10023
+│   │       ├── MonitorDQM_2026-01-13_15-19-14.root
+│   │       └── Results.root
+│   ├── TB2S_Ladder_minus_6CP_9_ambient_2SfullTest_1.log
+│   └── ambient
+│       ├── MonitorResults
+│       │   └── MonitorDQM_2026-10-02_10-58-20.root
+│       ├── Results
+│       │   └── Run_0
+│       │       └── Results.root
+│       ├── RunNumbers.dat
+│       ├── logs
+│       │   ├── Ph2_ACF.log
+│       │   ├── Ph2_ACF_debug.log
+│       │   ├── Ph2_ACF_err.log
+│       │   ├── Ph2_ACF_fatal.log
+│       │   └── Ph2_ACF_warn.log
+│       └── myeasylog.log
+└── Pos_2__TB2S_Ladder_plus_5CP_4
+    ├── PreIntResults
+    │   ├── 2S_18_6_KIT-10022
+    │   │   └── 2S_18_6_KIT-10022_2025-08-05_15h05m03s_+23C_2SfullTest_v6-16.root
+    │   ├── 2S_18_6_KIT-10023
+    │   │   └── 2S_18_6_KIT-10023_2025-08-01_14h01m05s_+24C_2SfullTest_v6-16.root
+    │   ├── 2S_18_6_KIT-10025
+    │   │   └── 2S_18_6_KIT-10025_2025-08-01_11h38m21s_+24C_2SfullTest_v6-16.root
+    │   ├── 2S_18_6_KIT-10026
+    │   │   └── 2S_18_6_KIT-10026_2025-07-29_14h07m38s_+24C_2SfullTest_v6-16.root
+    │   ├── 2S_18_6_KIT-10027
+    │   │   └── 2S_18_6_KIT-10027_2025-07-29_13h33m00s_+23C_2SfullTest_v6-16.root
+    │   ├── 2S_18_6_KIT-10028
+    │   │   └── 2S_18_6_KIT-10028_2025-07-29_11h17m23s_+25C_2SfullTest_v6-16.root
+    │   ├── 2S_18_6_KIT-10029
+    │   │   └── 2S_18_6_KIT-10029_2025-07-29_10h39m28s_+24C_2SfullTest_v6-16.root
+    │   ├── 2S_18_6_KIT-10030
+    │   │   └── 2S_18_6_KIT-10030_2025-07-29_10h09m29s_+24C_2SfullTest_v6-16.root
+    │   ├── 2S_18_6_KIT-10031
+    │   │   └── 2S_18_6_KIT-10031_2025-07-29_09h32m00s_+24C_2SfullTest_v6-16.root
+    │   ├── 2S_18_6_KIT-10033
+    │   │   └── 2S_18_6_KIT-10033_2025-07-29_08h12m31s_+24C_2SfullTest_v6-16.root
+    │   ├── 2S_18_6_NCP-10009
+    │   │   ├── MonitorDQM_2026-01-14_09-11-27.root
+    │   │   └── Results.root
+    │   └── 2S_18_6_NCP-10010
+    │       ├── MonitorDQM_2026-03-20_11-26-10.root
+    │       └── Results.root
+    ├── TB2S_Ladder_plus_5CP_4_ambient_2SfullTest_2.log
+    └── ambient
+        ├── MonitorResults
+        │   └── MonitorDQM_2026-10-02_10-58-22.root
+        ├── Results
+        │   └── Run_0
+        │       └── Results.root
+        ├── RunNumbers.dat
+        ├── logs
+        │   ├── Ph2_ACF.log
+        │   ├── Ph2_ACF_debug.log
+        │   ├── Ph2_ACF_err.log
+        │   ├── Ph2_ACF_fatal.log
+        │   └── Ph2_ACF_warn.log
+        └── myeasylog.log
+	```
     - IMPORTANT:
       - The `PreInt Results` should be downloaded before hand, and the best strategy would be to check if the files are correct.
       - Perhaps, we should not add the `downloading Preint results` task to the maste GUI controller.
