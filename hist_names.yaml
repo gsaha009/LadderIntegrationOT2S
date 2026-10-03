@@ -1,0 +1,105 @@
+# Name of the histograms
+# Can be different in different Ph2ACF versions
+
+# strip noise histogram names (hybrid level)
+strip_noise_hname_hybrid_level:
+ - StripChannelNoise
+strip_noise_hname_hybrid_level_bottom:
+ - StripChannelNoiseBottom
+strip_noise_hname_hybrid_level_top:
+ - StripChannelNoiseTop
+
+# strip noise histogram names (chip level)
+strip_noise_hname_chip_level:
+ - ChannelNoise
+strip_noise_hname_chip_level_bottom:
+ - ChannelNoiseBottom
+strip_noise_hname_chip_level_top:
+ - ChannelNoiseTop
+
+# common noise histogram names (hybrid level)
+common_noise_hname_hybrid_level:
+ - CommonNoiseHits_OccupancyDriven
+common_noise_hname_hybrid_level_bottom:
+ - CommonNoiseHitsBottom_OccupancyDriven
+common_noise_hname_hybrid_level_top:
+ - CommonNoiseHitsTop_OccupancyDriven
+
+# common noise histogram names (chip level)
+common_noise_hname_chip_level:
+ - CommonNoiseHits_OccupancyDriven
+common_noise_hname_chip_level_bottom:
+ - CommonNoiseHitsBottom_OccupancyDriven
+common_noise_hname_chip_level_top:
+ - CommonNoiseHitsTop_OccupancyDriven
+
+# common noise module level
+common_noise_hname_module_level:
+ - CommonNoiseHits_OccupancyDriven
+common_noise_hname_module_level_bottom:
+ - CommonNoiseHitsBottom_OccupancyDriven
+common_noise_hname_module_level_top:
+ - CommonNoiseHitsTop_OccupancyDriven
+
+
+# common noise module level (SigmaNoise_3.00)
+common_noise_3sigma_hname_module_level:
+ - CommonNoiseHits_SigmaNoise_3.00
+ - CommonNoiseHits_SigmaNoise_3,00
+common_noise_3sigma_hname_module_level_bottom:
+ - CommonNoiseHitsBottom_SigmaNoise_3.00
+ - CommonNoiseHitsBottom_SigmaNoise_3,00
+common_noise_3sigma_hname_module_level_top:
+ - CommonNoiseHitsTop_SigmaNoise_3.00
+ - CommonNoiseHitsTop_SigmaNoise_3,00
+
+# common noise histogram names (hybrid level : SigmaNoise_3.00)
+common_noise_3sigma_hname_hybrid_level:
+ - CommonNoiseHits_SigmaNoise_3.00
+ - CommonNoiseHits_SigmaNoise_3,00
+common_noise_3sigma_hname_hybrid_level_bottom:
+ - CommonNoiseHitsBottom_SigmaNoise_3.00
+ - CommonNoiseHitsBottom_SigmaNoise_3,00
+common_noise_3sigma_hname_hybrid_level_top:
+ - CommonNoiseHitsTop_SigmaNoise_3.00
+ - CommonNoiseHitsTop_SigmaNoise_3,00
+
+# common noise histogram names (chip level : SigmaNoise_3.00)
+common_noise_3sigma_hname_chip_level:
+ - CommonNoiseHits_SigmaNoise_3.00
+ - CommonNoiseHits_SigmaNoise_3,00
+common_noise_3sigma_hname_chip_level_bottom:
+ - CommonNoiseHitsBottom_SigmaNoise_3.00
+ - CommonNoiseHitsBottom_SigmaNoise_3,00
+common_noise_3sigma_hname_chip_level_top:
+ - CommonNoiseHitsTop_SigmaNoise_3.00
+ - CommonNoiseHitsTop_SigmaNoise_3,00
+
+
+# pedestal at CBC level
+pede_hname_chip_level:
+ - ChannelPedestal
+ - ChannelPedestalDistribution
+
+
+# extra
+h_lightYieldScan:
+  - VTRx_LightYieldScan
+h_eyeOpening_0p3:
+  - LpGBT_EyeOpeningScan_Power_0.333333
+  - LpGBT_EyeOpeningScan_Power_0,333333
+h_eyeOpening_0p6:
+  - LpGBT_EyeOpeningScan_Power_0.666667
+  - LpGBT_EyeOpeningScan_Power_0,666667
+h_eyeOpening_1p0:
+  - LpGBT_EyeOpeningScan_Power_1.000000
+  - LpGBT_EyeOpeningScan_Power_1,000000
+h_phaseAlignEff:
+  - CICtoLpGBT_PhaseAlignmentEfficiency
+h_foundPhaseDistr:
+  - CICtoLpGBT_FoundPhaseDistribution
+h_bestPhase:
+  - CICtoLpGBT_BestPhase
+h_bertErrorRate:
+  - BERTerrorRate
+  
