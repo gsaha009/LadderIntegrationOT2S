@@ -24,10 +24,9 @@ class DataLoader:
         self.mask_noisy = kwargs.get("mask_noisy", False)
         self.mask_noise_level = kwargs.get("mask_noise_level", 15)
 
-        self.in_kira = self.fileinfo['single_module_box']
         self.in_ladder = self.fileinfo['ladder']
+        self.in_kira = False if self.fileinfo['ladder'] else True #self.fileinfo['single_module_box']
 
-        
 
     def __mask_noisy(self,arr):
         arr = np.array(arr)
@@ -43,7 +42,7 @@ class DataLoader:
         assert len(namelist) > 0, "list of histnames must not be empty"
         for name in namelist:
             hist  = root_ptr.Get(name)
-            if isinstance(hist, ROOT.TH1F):
+            if isinstance(hist, (ROOT.TH1,ROOT.TH2)):
                 break
         return hist
 
@@ -149,23 +148,23 @@ class DataLoader:
                     noise_dict[f"{noise_type}_noise_hb{idx}_top"][f"CBC_{icbc}"] = ch_noise_distr_hb_top_cbc_list
 
                     if "common" in noise_type:
-                        fit = ch_noise_distr_hb_cbc.GetFunction("chipFit")
-                        if not fit:
-                            logger.warning("... Cannot find fit function 'chipFit' in histogram ... skipping ...")
-                            continue
-                        params = {fit.GetParName(i):fit.GetParameters()[i] for i in range(fit.GetNpar())}
+                        #fit = ch_noise_distr_hb_cbc.GetFunction("chipFit")
+                        #if not fit:
+                        #    logger.warning("... Cannot find fit function 'chipFit' in histogram ... skipping ...")
+                        #    continue
+                        #params = {fit.GetParName(i):fit.GetParameters()[i] for i in range(fit.GetNpar())}
 
-                        fit_bot = ch_noise_distr_hb_bot_cbc.GetFunction("chipFit")
-                        params_bot = {fit_bot.GetParName(i):fit_bot.GetParameters()[i] for i in range(fit_bot.GetNpar())}
+                        #fit_bot = ch_noise_distr_hb_bot_cbc.GetFunction("chipFit")
+                        #params_bot = {fit_bot.GetParName(i):fit_bot.GetParameters()[i] for i in range(fit_bot.GetNpar())}
 
-                        fit_top = ch_noise_distr_hb_top_cbc.GetFunction("chipFit")
-                        params_top = {fit_top.GetParName(i):fit_top.GetParameters()[i] for i in range(fit_top.GetNpar())}
+                        #fit_top = ch_noise_distr_hb_top_cbc.GetFunction("chipFit")
+                        #params_top = {fit_top.GetParName(i):fit_top.GetParameters()[i] for i in range(fit_top.GetNpar())}
 
-                        noise_dict[f"{noise_type}_noise_hb{idx}"][f"CBC_{icbc}_fit_params"] = params
-                        noise_dict[f"{noise_type}_noise_hb{idx}_bot"][f"CBC_{icbc}_fit_params"] = params_bot
-                        noise_dict[f"{noise_type}_noise_hb{idx}_top"][f"CBC_{icbc}_fit_params"] = params_top
+                        #noise_dict[f"{noise_type}_noise_hb{idx}"][f"CBC_{icbc}_fit_params"] = params
+                        #noise_dict[f"{noise_type}_noise_hb{idx}_bot"][f"CBC_{icbc}_fit_params"] = params_bot
+                        #noise_dict[f"{noise_type}_noise_hb{idx}_top"][f"CBC_{icbc}_fit_params"] = params_top
                         #from IPython import embed; embed(); exit()
-                        
+                        pass
         return noise_dict
 
 
@@ -196,46 +195,102 @@ class DataLoader:
     def __get_extra_info(self, root_ptr, ibrd, iopt, **kwargs):
         mod_level_hist_dict = {}
         root_dir = f"Detector/Board_{ibrd}/OpticalGroup_{iopt}"
-        hname_lightYieldScan = kwargs.get('hname_lightYieldScan', f'D_B({ibrd})_VTRx_LightYieldScan_OpticalGroup({iopt})')
-        hname_eyeOpening_0p3 = kwargs.get('hname_eyeOpening_0p3', f'D_B({ibrd})_LpGBT_EyeOpeningScan_Power_0.333333_OpticalGroup({iopt})')
-        hname_eyeOpening_0p6 = kwargs.get('hname_eyeOpening_0p6', f'D_B({ibrd})_LpGBT_EyeOpeningScan_Power_0.666667_OpticalGroup({iopt})')
-        hname_eyeOpening_1p0 = kwargs.get('hname_eyeOpening_1p0', f'D_B({ibrd})_LpGBT_EyeOpeningScan_Power_1.000000_OpticalGroup({iopt})')
-        hname_phaseAlignEff  = kwargs.get('hname_phaseAlignEff',  f'D_B({ibrd})_CICtoLpGBT_PhaseAlignmentEfficiency_OpticalGroup({iopt})')
-        hname_foundPhaseDistr= kwargs.get('hname_foundPhaseDistr',f'D_B({ibrd})_CICtoLpGBT_FoundPhaseDistribution_OpticalGroup({iopt})')
-        hname_bestPhase      = kwargs.get('hname_bestPhase',      f'D_B({ibrd})_CICtoLpGBT_BestPhase_OpticalGroup({iopt})')
-        hname_bertErrorRate  = kwargs.get('hname_bertErrorRate',  f'D_B({ibrd})_BERTerrorRate_OpticalGroup({iopt})')
+
+        hnames_lightYieldScan  = kwargs.get('h_lightYieldScan', ['VTRx_LightYieldScan'])
+        hnames_eyeOpening_0p3  = kwargs.get('h_eyeOpening_0p3', ['LpGBT_EyeOpeningScan_Power_0.333333','LpGBT_EyeOpeningScan_Power_0,333333'])
+        hnames_eyeOpening_0p6  = kwargs.get('h_eyeOpening_0p6', ['LpGBT_EyeOpeningScan_Power_0.666667','LpGBT_EyeOpeningScan_Power_0,666667'])
+        hnames_eyeOpening_1p0  = kwargs.get('h_eyeOpening_1p0', ['LpGBT_EyeOpeningScan_Power_1.000000','LpGBT_EyeOpeningScan_Power_1,000000'])
+        hnames_phaseAlignEff   = kwargs.get('h_phaseAlignEff',  ['CICtoLpGBT_PhaseAlignmentEfficiency'])
+        hnames_foundPhaseDistr = kwargs.get('h_foundPhaseDistr',['CICtoLpGBT_FoundPhaseDistribution'])
+        hnames_bestPhase       = kwargs.get('h_bestPhase',      ['CICtoLpGBT_BestPhase'])
+        hnames_bertErrorRate   = kwargs.get('h_bertErrorRate',  ['BERTerrorRate'])
+        hnames_bertTestedBitCounter = kwargs.get('h_bertTestedBitCounter',  ['BERTtestedBitCounter'])
+        hnames_fecErrorCounter = kwargs.get('h_fecErrorCounter', ['FECerrorCounter'])
+
+        #print(hnames_eyeOpening_0p3)
         
-        hist_vtrx_light_yield_scan = root_ptr.Get(f'{root_dir}/{hname_lightYieldScan}')
-        if not hist_vtrx_light_yield_scan: logger.warning(f"{hname_lightYieldScan} not found in {root_dir}")
+        #hname_lightYieldScan = kwargs.get('hname_lightYieldScan', f'D_B({ibrd})_VTRx_LightYieldScan_OpticalGroup({iopt})')
+        #hname_eyeOpening_0p3 = kwargs.get('hname_eyeOpening_0p3', f'D_B({ibrd})_LpGBT_EyeOpeningScan_Power_0.333333_OpticalGroup({iopt})')
+        #hname_eyeOpening_0p6 = kwargs.get('hname_eyeOpening_0p6', f'D_B({ibrd})_LpGBT_EyeOpeningScan_Power_0.666667_OpticalGroup({iopt})')
+        #hname_eyeOpening_1p0 = kwargs.get('hname_eyeOpening_1p0', f'D_B({ibrd})_LpGBT_EyeOpeningScan_Power_1.000000_OpticalGroup({iopt})')
+        #hname_phaseAlignEff  = kwargs.get('hname_phaseAlignEff',  f'D_B({ibrd})_CICtoLpGBT_PhaseAlignmentEfficiency_OpticalGroup({iopt})')
+        #hname_foundPhaseDistr= kwargs.get('hname_foundPhaseDistr',f'D_B({ibrd})_CICtoLpGBT_FoundPhaseDistribution_OpticalGroup({iopt})')
+        #hname_bestPhase      = kwargs.get('hname_bestPhase',      f'D_B({ibrd})_CICtoLpGBT_BestPhase_OpticalGroup({iopt})')
+        #hname_bertErrorRate  = kwargs.get('hname_bertErrorRate',  f'D_B({ibrd})_BERTerrorRate_OpticalGroup({iopt})')
+
+        hnames_lightYieldScan = [f"{root_dir}/D_B({ibrd})_{name}_OpticalGroup({iopt})" for name in hnames_lightYieldScan]
+        hist_vtrx_light_yield_scan = self.__get_hist(root_ptr, hnamelist=hnames_lightYieldScan)
         hist_vtrx_light_yield_scan.SetDirectory(0)
 
-        hist_eye_opening_scan_0p3 = root_ptr.Get(f'{root_dir}/{hname_eyeOpening_0p3}')
-        if not hist_eye_opening_scan_0p3: logger.warning(f"{hname_eyeOpening_0p3} not found in {root_dir}")
+        hnames_eyeOpening_0p3 = [f"{root_dir}/D_B({ibrd})_{name}_OpticalGroup({iopt})" for name in hnames_eyeOpening_0p3]
+        hist_eye_opening_scan_0p3 = self.__get_hist(root_ptr, hnamelist=hnames_eyeOpening_0p3)
         hist_eye_opening_scan_0p3.SetDirectory(0)
 
-        hist_eye_opening_scan_0p6 = root_ptr.Get(f'{root_dir}/{hname_eyeOpening_0p6}')
-        if not hist_eye_opening_scan_0p6: logger.warning(f"{hname_eyeOpening_0p6} not found in {root_dir}")        
+        hnames_eyeOpening_0p6 = [f"{root_dir}/D_B({ibrd})_{name}_OpticalGroup({iopt})" for name in hnames_eyeOpening_0p6]
+        hist_eye_opening_scan_0p6 = self.__get_hist(root_ptr, hnamelist=hnames_eyeOpening_0p6)
         hist_eye_opening_scan_0p6.SetDirectory(0)
 
-        hist_eye_opening_scan_1p0 = root_ptr.Get(f'{root_dir}/{hname_eyeOpening_1p0}')
-        if not hist_eye_opening_scan_1p0: logger.warning(f"{hname_eyeOpening_1p0} not found in {root_dir}")
+        hnames_eyeOpening_1p0 = [f"{root_dir}/D_B({ibrd})_{name}_OpticalGroup({iopt})" for name in hnames_eyeOpening_1p0]
+        hist_eye_opening_scan_1p0 = self.__get_hist(root_ptr, hnamelist=hnames_eyeOpening_1p0)
         hist_eye_opening_scan_1p0.SetDirectory(0)
-
-        hist_phase_alignment_efficiency = root_ptr.Get(f'{root_dir}/{hname_phaseAlignEff}')
-        if not hist_phase_alignment_efficiency: logger.warning(f"{hname_phaseAlignEff} not found in {root_dir}")
+        
+        hnames_phaseAlignEff = [f"{root_dir}/D_B({ibrd})_{name}_OpticalGroup({iopt})" for name in hnames_phaseAlignEff]
+        hist_phase_alignment_efficiency = self.__get_hist(root_ptr, hnamelist=hnames_phaseAlignEff)
         hist_phase_alignment_efficiency.SetDirectory(0)
 
-        hist_found_phase_distribution = root_ptr.Get(f'{root_dir}/{hname_foundPhaseDistr}')
-        if not hist_found_phase_distribution: logger.warning(f"{hname_foundPhaseDistr} not found in {root_dir}")        
+        hnames_foundPhaseDistr = [f"{root_dir}/D_B({ibrd})_{name}_OpticalGroup({iopt})" for name in hnames_foundPhaseDistr]
+        hist_found_phase_distribution = self.__get_hist(root_ptr, hnamelist=hnames_foundPhaseDistr)
         hist_found_phase_distribution.SetDirectory(0)
 
-        hist_best_phase = root_ptr.Get(f'{root_dir}/{hname_bestPhase}')
-        if not hist_best_phase: logger.warning(f"{hname_bestPhase} not found in {root_dir}")
+        hnames_bestPhase = [f"{root_dir}/D_B({ibrd})_{name}_OpticalGroup({iopt})" for name in hnames_bestPhase]
+        hist_best_phase = self.__get_hist(root_ptr, hnamelist=hnames_bestPhase)
         hist_best_phase.SetDirectory(0)
 
-        hist_bert_error_rate = root_ptr.Get(f'{root_dir}/{hname_bertErrorRate}')
-        if not hist_bert_error_rate: logger.warning(f"{hname_bertErrorRate} not found in {root_dir}")
+        hnames_bertErrorRate = [f"{root_dir}/D_B({ibrd})_{name}_OpticalGroup({iopt})" for name in hnames_bertErrorRate]
+        hist_bert_error_rate = self.__get_hist(root_ptr, hnamelist=hnames_bertErrorRate)
         hist_bert_error_rate.SetDirectory(0)
+
+        hnames_bertTestedBitCounter = [f"{root_dir}/D_B({ibrd})_{name}_OpticalGroup({iopt})" for name in hnames_bertTestedBitCounter]
+        hist_bertTestedBitCounter = self.__get_hist(root_ptr, hnamelist=hnames_bertTestedBitCounter)
+        hist_bertTestedBitCounter.SetDirectory(0)
+
+        hnames_fecErrorCounter = [f"{root_dir}/D_B({ibrd})_{name}_OpticalGroup({iopt})" for name in hnames_fecErrorCounter]
+        hist_fecErrorCounter = self.__get_hist(root_ptr, hnamelist=hnames_fecErrorCounter)
+        hist_fecErrorCounter.SetDirectory(0)
+
+        
+        
+        #hist_vtrx_light_yield_scan = root_ptr.Get(f'{root_dir}/{hname_lightYieldScan}')
+        #if not hist_vtrx_light_yield_scan: logger.warning(f"{hname_lightYieldScan} not found in {root_dir}")
+        #hist_vtrx_light_yield_scan.SetDirectory(0)
+
+        #hist_eye_opening_scan_0p3 = root_ptr.Get(f'{root_dir}/{hname_eyeOpening_0p3}')
+        #if not hist_eye_opening_scan_0p3: logger.warning(f"{hname_eyeOpening_0p3} not found in {root_dir}")
+        #hist_eye_opening_scan_0p3.SetDirectory(0)
+
+        #hist_eye_opening_scan_0p6 = root_ptr.Get(f'{root_dir}/{hname_eyeOpening_0p6}')
+        #if not hist_eye_opening_scan_0p6: logger.warning(f"{hname_eyeOpening_0p6} not found in {root_dir}")        
+        #hist_eye_opening_scan_0p6.SetDirectory(0)
+
+        #hist_eye_opening_scan_1p0 = root_ptr.Get(f'{root_dir}/{hname_eyeOpening_1p0}')
+        #if not hist_eye_opening_scan_1p0: logger.warning(f"{hname_eyeOpening_1p0} not found in {root_dir}")
+        #hist_eye_opening_scan_1p0.SetDirectory(0)
+
+        #hist_phase_alignment_efficiency = root_ptr.Get(f'{root_dir}/{hname_phaseAlignEff}')
+        #if not hist_phase_alignment_efficiency: logger.warning(f"{hname_phaseAlignEff} not found in {root_dir}")
+        #hist_phase_alignment_efficiency.SetDirectory(0)
+
+        #hist_found_phase_distribution = root_ptr.Get(f'{root_dir}/{hname_foundPhaseDistr}')
+        #if not hist_found_phase_distribution: logger.warning(f"{hname_foundPhaseDistr} not found in {root_dir}")        
+        #hist_found_phase_distribution.SetDirectory(0)
+
+        #hist_best_phase = root_ptr.Get(f'{root_dir}/{hname_bestPhase}')
+        #if not hist_best_phase: logger.warning(f"{hname_bestPhase} not found in {root_dir}")
+        #hist_best_phase.SetDirectory(0)
+
+        #hist_bert_error_rate = root_ptr.Get(f'{root_dir}/{hname_bertErrorRate}')
+        #if not hist_bert_error_rate: logger.warning(f"{hname_bertErrorRate} not found in {root_dir}")
+        #hist_bert_error_rate.SetDirectory(0)
         
         mod_level_hist_dict['VTRx_LightYieldScan'] = hist_vtrx_light_yield_scan
         mod_level_hist_dict['LpGBT_EyeOpeningScan_Power_0.33'] = hist_eye_opening_scan_0p3
@@ -278,7 +333,8 @@ class DataLoader:
                 "Stub4": hist_best_phase.GetBinContent(12),
             },
         }
-        mod_level_hist_dict['BERTerrorRate'] = {
+        
+        mod_level_hist_dict['BERTerrorRateData'] = {
             f"Hybrid_0" : {
                 "L1": hist_bert_error_rate.GetBinContent(1),
                 "Stub0": hist_bert_error_rate.GetBinContent(2),
@@ -297,12 +353,19 @@ class DataLoader:
             },
         }
 
+        mod_level_hist_dict['BERTerrorRate'] = hist_bert_error_rate
+        mod_level_hist_dict['BERTtestedBitCounter'] = hist_bertTestedBitCounter
+        mod_level_hist_dict['FECerrorCounter'] = hist_fecErrorCounter
+
+
+        
         mod_level_hist_dict['CICtoLpGBT_PatternMatchingErrorRate'] = {}
         mod_level_hist_dict['CBCtoCIC_lockingEfficiency'] = {}
         mod_level_hist_dict['RegisterMatchingEfficiency'] = {}
         mod_level_hist_dict['SCurve'] = {}
         mod_level_hist_dict['ThresholdVsDelay'] = {}
         mod_level_hist_dict['BestThresholdAndDelay'] = {}
+
         
         for ihbidx,ihb in enumerate([2*iopt, 1+2*iopt]):
             hb = f"Hybrid_{ihb}"
@@ -402,10 +465,6 @@ class DataLoader:
             
             # Delay scans
             
-            
-
-            
-            
         return mod_level_hist_dict
 
         
@@ -413,142 +472,123 @@ class DataLoader:
     def __get_data_for_ladder(self, nboards, nopticals, root_file_info, module_info):
         main_noise_dict = {}
 
-        for temperature_key, test_iter_dict in root_file_info.items():
-            logger.info(f"Cooling temperature : {temperature_key}")
-            for test_iter, file_dict in test_iter_dict.items():
-                logger.info(f"Run : {test_iter}")
+        root_file = root_file_info["tfile_main"]
+        logger.info(f"==> ROOT File : {root_file}")
+        dqm_file = root_file_info["tfile_dqm"]
+        logger.info(f"==> DQM ROOT File : {dqm_file}")
 
-                root_file = file_dict["tfile_main"]
-                logger.info(f"==> ROOT File : {test_iter} ==> {root_file}")
-                dqm_file = file_dict["tfile_dqm"]
-                logger.info(f"==> DQM ROOT File : {test_iter} ==> {dqm_file}")
-
-                root_ptr = ROOT.TFile(root_file, "r")
-                dqm_ptr  = ROOT.TFile(dqm_file, "r")
+        root_ptr = ROOT.TFile(root_file, "r")
+        dqm_ptr  = ROOT.TFile(dqm_file, "r")
                 
-                # Iterating over nboards
-                for ibrd in range(nboards):
-                    logger.info(f"BeBoard : {ibrd}")
-                    # Iterating over nOpticals
-                    #for iopt in range(nopticals):
-                    for iopt in range(nopticals[0], nopticals[1]):
-                        logger.info(f"Optical Group : {iopt}")
-                        module_tag = module_info[f"board_{ibrd}_optical_{iopt}"]
+        # Iterating over nboards
+        for ibrd in range(nboards):
+            logger.info(f"BeBoard : {ibrd}")
+            # Iterating over nOpticals
+            for iopt in nopticals:
+                logger.info(f"Optical Group : {iopt}")
+                module_tag = module_info[f"board_{ibrd}_optical_{iopt}"]
 
-                        # $$$$$$$$$$$$$$$$$$$$$ Data Structure $$$$$$$$$$$$$$$$ #
-                        if module_tag in main_noise_dict:
-                            main_noise_dict[module_tag].update({
-                                temperature_key: {
-                                    test_iter: {}
-                                }
-                            })
-                        else:
-                            main_noise_dict[module_tag] = {
-                                temperature_key: {
-                                    test_iter: {}
-                                }
-                            }
-
-                        if self.testinfo.get("check_sensor_temperature") == True:
-                            # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
-                            #              Sensor Temperature and timestamps from DQM ROOT file               #
-                            # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
-                            dqm_dir = f"Detector/Board_{ibrd}/OpticalGroup_{iopt}"
+                main_noise_dict[module_tag] = {}
+            
+                if self.testinfo.get("check_sensor_temperature") == True:
+                    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
+                    #              Sensor Temperature and timestamps from DQM ROOT file               #
+                    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
+                    dqm_dir = f"Detector/Board_{ibrd}/OpticalGroup_{iopt}"
                             
-                            graph_temp = dqm_ptr.Get(f"{dqm_dir}/D_B({ibrd})_LpGBT_DQM_SensorTemp_OpticalGroup({iopt})")
-                            get_point_x = lambda graph_temp : [graph_temp.GetPointX(i) for i in range(graph_temp.GetN())]
-                            get_point_y = lambda graph_temp : [graph_temp.GetPointY(i) for i in range(graph_temp.GetN())]
-                            time_stamps  = get_point_x(graph_temp)
-                            sensor_temps = get_point_y(graph_temp)
-                            
-                            # Save the timestamp & temp in the dict
-                            main_noise_dict[module_tag][temperature_key][test_iter].update({"sensor_temps": sensor_temps})
-                            main_noise_dict[module_tag][temperature_key][test_iter].update({"time_stamps" : self.__format_datetime(time_stamps)})
+                    graph_temp = dqm_ptr.Get(f"{dqm_dir}/D_B({ibrd})_LpGBT_DQM_SensorTemp_OpticalGroup({iopt})")
+                    get_point_x = lambda graph_temp : [graph_temp.GetPointX(i) for i in range(graph_temp.GetN())]
+                    get_point_y = lambda graph_temp : [graph_temp.GetPointY(i) for i in range(graph_temp.GetN())]
+                    time_stamps  = get_point_x(graph_temp)
+                    sensor_temps = get_point_y(graph_temp)
+                    
+                    # Save the timestamp & temp in the dict
+                    main_noise_dict[module_tag].update({"sensor_temps": sensor_temps})
+                    main_noise_dict[module_tag].update({"time_stamps" : self.__format_datetime(time_stamps)})
                         
-                        else:
-                            logger.warning("skip checking sensor temperature data")
+                else:
+                    logger.warning("skip checking sensor temperature data")
                         
 
-                        # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
-                        #              Channel/STrip noise from the main results ROOT file                #
-                        # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
-                        strip_noise_dict = self.__prepare_noise_data(root_ptr,
-                                                                     ibrd,
-                                                                     iopt,
-                                                                     hname_hb=self.fileinfo['strip_noise_hname_hybrid_level'],
-                                                                     hname_hb_bot=self.fileinfo['strip_noise_hname_hybrid_level_bottom'],
-                                                                     hname_hb_top=self.fileinfo['strip_noise_hname_hybrid_level_top'],
-                                                                     hname_cbc=self.fileinfo['strip_noise_hname_chip_level'],
-                                                                     hname_cbc_bot=self.fileinfo['strip_noise_hname_chip_level_bottom'],
-                                                                     hname_cbc_top=self.fileinfo['strip_noise_hname_chip_level_top'],
-                                                                     cbc_level=True,
-                                                                     noise_type="strip")
+                # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
+                #              Channel/STrip noise from the main results ROOT file                #
+                # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
+                strip_noise_dict = self.__prepare_noise_data(root_ptr,
+                                                             ibrd,
+                                                             iopt,
+                                                             hname_hb=self.fileinfo['strip_noise_hname_hybrid_level'],
+                                                             hname_hb_bot=self.fileinfo['strip_noise_hname_hybrid_level_bottom'],
+                                                             hname_hb_top=self.fileinfo['strip_noise_hname_hybrid_level_top'],
+                                                             hname_cbc=self.fileinfo['strip_noise_hname_chip_level'],
+                                                             hname_cbc_bot=self.fileinfo['strip_noise_hname_chip_level_bottom'],
+                                                             hname_cbc_top=self.fileinfo['strip_noise_hname_chip_level_top'],
+                                                             cbc_level=True,
+                                                             noise_type="strip")
                         
-                        #main_noise_dict[module_tag][temperature_key][test_iter] = strip_noise_dict
-                        main_noise_dict[module_tag][temperature_key][test_iter].update(strip_noise_dict)
+                main_noise_dict[module_tag].update(strip_noise_dict)
                         
-                        # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
-                        #                Common mode noise from the main results ROOT file                #
-                        # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
-                        if self.testinfo.get("check_common_noise") == True:
-                            common_noise_dict = self.__prepare_noise_data(root_ptr,
-                                                                          ibrd,
-                                                                          iopt,
-                                                                          hname_mod=self.fileinfo['common_noise_hname_module_level'],
-                                                                          hname_mod_bot=self.fileinfo['common_noise_hname_module_level_bottom'],
-                                                                          hname_mod_top=self.fileinfo['common_noise_hname_module_level_top'],
-                                                                          hname_hb=self.fileinfo['common_noise_hname_hybrid_level'],
-                                                                          hname_hb_bot=self.fileinfo['common_noise_hname_hybrid_level_bottom'],
-                                                                          hname_hb_top=self.fileinfo['common_noise_hname_hybrid_level_top'],
-                                                                          hname_cbc=self.fileinfo['common_noise_hname_chip_level'],
-                                                                          hname_cbc_bot=self.fileinfo['common_noise_hname_chip_level_bottom'],
-                                                                          hname_cbc_top=self.fileinfo['common_noise_hname_chip_level_top'],
-                                                                          cbc_level=True,
-                                                                          noise_type="common")
+                # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
+                #                Common mode noise from the main results ROOT file                #
+                # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
+                if self.testinfo.get("check_common_noise") == True:
+                    common_noise_dict = self.__prepare_noise_data(root_ptr,
+                                                                  ibrd,
+                                                                  iopt,
+                                                                  hname_mod=self.fileinfo['common_noise_hname_module_level'],
+                                                                  hname_mod_bot=self.fileinfo['common_noise_hname_module_level_bottom'],
+                                                                  hname_mod_top=self.fileinfo['common_noise_hname_module_level_top'],
+                                                                  hname_hb=self.fileinfo['common_noise_hname_hybrid_level'],
+                                                                  hname_hb_bot=self.fileinfo['common_noise_hname_hybrid_level_bottom'],
+                                                                  hname_hb_top=self.fileinfo['common_noise_hname_hybrid_level_top'],
+                                                                  hname_cbc=self.fileinfo['common_noise_hname_chip_level'],
+                                                                  hname_cbc_bot=self.fileinfo['common_noise_hname_chip_level_bottom'],
+                                                                  hname_cbc_top=self.fileinfo['common_noise_hname_chip_level_top'],
+                                                                  cbc_level=True,
+                                                                  noise_type="common")
                             
-                            main_noise_dict[module_tag][temperature_key][test_iter].update(common_noise_dict)
+                    main_noise_dict[module_tag].update(common_noise_dict)
 
-                            if self.testinfo.get("fit_simultaneous_common_noise") == True:
-                                common_3sigma_noise_dict = self.__prepare_noise_data(root_ptr,
-                                                                                     ibrd,
-                                                                                     iopt,
-                                                                                     hname_mod=self.fileinfo['common_noise_3sigma_hname_module_level'],
-                                                                                     hname_mod_bot=self.fileinfo['common_noise_3sigma_hname_module_level_bottom'],
-                                                                                     hname_mod_top=self.fileinfo['common_noise_3sigma_hname_module_level_top'],
-                                                                                     hname_hb=self.fileinfo['common_noise_3sigma_hname_hybrid_level'],
-                                                                                     hname_hb_bot=self.fileinfo['common_noise_3sigma_hname_hybrid_level_bottom'],
-                                                                                     hname_hb_top=self.fileinfo['common_noise_3sigma_hname_hybrid_level_top'],
-                                                                                     hname_cbc=self.fileinfo['common_noise_3sigma_hname_chip_level'],
-                                                                                     hname_cbc_bot=self.fileinfo['common_noise_3sigma_hname_chip_level_bottom'],
-                                                                                     hname_cbc_top=self.fileinfo['common_noise_3sigma_hname_chip_level_top'],
-                                                                                     cbc_level=True,
-                                                                                     noise_type="common_3sigma")
-                                
-                                main_noise_dict[module_tag][temperature_key][test_iter].update(common_3sigma_noise_dict)
+                    if self.testinfo.get("fit_simultaneous_common_noise") == True:
+                        common_3sigma_noise_dict = self.__prepare_noise_data(root_ptr,
+                                                                             ibrd,
+                                                                             iopt,
+                                                                             hname_mod=self.fileinfo['common_noise_3sigma_hname_module_level'],
+                                                                             hname_mod_bot=self.fileinfo['common_noise_3sigma_hname_module_level_bottom'],
+                                                                             hname_mod_top=self.fileinfo['common_noise_3sigma_hname_module_level_top'],
+                                                                             hname_hb=self.fileinfo['common_noise_3sigma_hname_hybrid_level'],
+                                                                             hname_hb_bot=self.fileinfo['common_noise_3sigma_hname_hybrid_level_bottom'],
+                                                                             hname_hb_top=self.fileinfo['common_noise_3sigma_hname_hybrid_level_top'],
+                                                                             hname_cbc=self.fileinfo['common_noise_3sigma_hname_chip_level'],
+                                                                             hname_cbc_bot=self.fileinfo['common_noise_3sigma_hname_chip_level_bottom'],
+                                                                             hname_cbc_top=self.fileinfo['common_noise_3sigma_hname_chip_level_top'],
+                                                                             cbc_level=True,
+                                                                             noise_type="common_3sigma")
+                        
+                        main_noise_dict[module_tag].update(common_3sigma_noise_dict)
 
                             
-                        else:
-                            logger.warning("skip checking common mode noise")
+                else:
+                    logger.warning("skip checking common mode noise")
 
 
-                        if self.testinfo.get("check_pedestal") == True:
-                            pede_dict = self.__prepare_pede_data(root_ptr,
-                                                                 ibrd,
-                                                                 iopt,
-                                                                 hname_cbc=self.fileinfo['pede_hname_chip_level'])
-                            main_noise_dict[module_tag][temperature_key][test_iter].update(pede_dict)
-                        else:
-                            logger.info("skip checking pedestal info")
-
-
-                        if self.testinfo.get("check_extra") == True:
-                            extra_dict = self.__get_extra_info(root_ptr,
-                                                               ibrd,
-                                                               iopt)
-                            main_noise_dict[module_tag][temperature_key][test_iter].update(extra_dict)
-                        else:
-                            logger.info("skip checking extra info, like S-Curve, LightYieldScans, BERT etc.")
-
+                if self.testinfo.get("check_pedestal") == True:
+                    pede_dict = self.__prepare_pede_data(root_ptr,
+                                                         ibrd,
+                                                         iopt,
+                                                         hname_cbc=self.fileinfo['pede_hname_chip_level'])
+                    main_noise_dict[module_tag].update(pede_dict)
+                else:
+                    logger.info("skip checking pedestal info")
+                    
+                    
+                if self.testinfo.get("check_extra") == True:
+                    extra_dict = self.__get_extra_info(root_ptr,
+                                                       ibrd,
+                                                       iopt)
+                    main_noise_dict[module_tag].update(extra_dict)
+                else:
+                    logger.info("skip checking extra info, like S-Curve, LightYieldScans, BERT etc.")
+                    
 
 
         return main_noise_dict
@@ -559,147 +599,146 @@ class DataLoader:
     def __get_data_for_kira(self, nboards, nopticals, root_file_info):
         main_noise_dict = {}
 
-        from_db = False
-        temperature_key = '+15 deg'
+        for mod_key, file_dict in root_file_info.items():
+            from_db = False
 
-        for mod_key, test_iter_dict in root_file_info.items():
             logger.info(f"Module : {mod_key}")
-            for test_iter, file_dict in test_iter_dict.items():
-                logger.info(f"Run : {test_iter}")
-
-                root_file = file_dict["tfile_main"]
-                logger.info(f"==> ROOT File : {test_iter} ==> {root_file}")
-                dqm_file = file_dict["tfile_dqm"]
-                logger.info(f"==> DQM ROOT File : {test_iter} ==> {dqm_file}")
-                root_ptr = ROOT.TFile(root_file, "r")
-                if dqm_file == root_file:
-                    logger.info(f"extracting environment temp : looks like files from DB")
-                    from_db = True
+            
+            root_file = file_dict["tfile_main"]
+            logger.info(f"==> ROOT File : {root_file}")
+            dqm_file = file_dict["tfile_dqm"]
+            logger.info(f"==> DQM ROOT File : {dqm_file}")
+            root_ptr = ROOT.TFile(root_file, "r")
+            if dqm_file == root_file:
+                logger.info(f"extracting environment temp : looks like files from DB")
+                from_db = True
+            else:
+                logger.info("Not a potato converted file")
                     
-                root_ptr = ROOT.TFile(root_file, "r")
-                dqm_ptr  = ROOT.TFile(dqm_file, "r")
+            root_ptr = ROOT.TFile(root_file, "r")
+            dqm_ptr  = ROOT.TFile(dqm_file, "r")
                 
-                # Iterating over nboards
-                for ibrd in range(nboards):
-                    logger.info(f"BeBoard : {ibrd}")
-                    # Iterating over nOpticals
-                    for iopt in range(nopticals[0], nopticals[1]):
-                        logger.info(f"Optical Group : {iopt}")
-                        module_tag = mod_key
+            # Iterating over nboards
+            for ibrd in range(nboards):
+                logger.info(f"BeBoard : {ibrd}")
+                iopt = file_dict["og"]
+                logger.info(f"Optical Group : {iopt}")
+                module_tag = mod_key
 
-                        # $$$$$$$$$$$$$$$$$$$$$ Data Structure $$$$$$$$$$$$$$$$ #
-                        if module_tag in main_noise_dict:
-                            main_noise_dict[module_tag].update({
-                                temperature_key: {
-                                    test_iter: {}
-                                }
-                            })
-                        else:
-                            main_noise_dict[module_tag] = {
-                                temperature_key: {
-                                    test_iter: {}
-                                }
-                            }
+                main_noise_dict[module_tag] = {}
+                            
+                if self.testinfo.get("check_sensor_temperature") == True:
+                    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
+                    #              Sensor Temperature and timestamps from DQM ROOT file               #
+                    # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
+                    dqm_dir = f"Detector/Board_{ibrd}/OpticalGroup_{iopt}"
+                    print(dqm_dir)
+                    #graph_temp = None
+                    graph_temp_name = ""
+                    print(f"from database: {from_db}")
+                    if not from_db:
+                        graph_temp_name = f"{dqm_dir}/D_B({ibrd})_LpGBT_DQM_SensorTemp_OpticalGroup({iopt})"
+                        print(graph_temp_name)
+                        #graph_temp = dqm_ptr.Get(graph_temp_name)
+                    else :
+                        #graph_temp = dqm_ptr.Get("Monitor/ENV_Temperature")
+                        #if not isinstance(graph_temp, ROOT.TGraph):
+                        #    graph_temp = dqm_ptr.Get("Monitor/ENV_temperature")
+                        graph_temp_name = f"MonitorDQM/{dqm_dir}/D_B({ibrd})_LpGBT_DQM_SensorTemp_OpticalGroup({iopt})"
+                        print(graph_temp_name)
+                        #graph_temp = dqm_ptr.Get(f"MonitorDQM/{dqm_dir}/D_B({ibrd})_LpGBT_DQM_SensorTemp_OpticalGroup({iopt})")
+
+                    graph_temp = dqm_ptr.Get(graph_temp_name)
+                    if not isinstance(graph_temp, ROOT.TGraph):
+                        raise RuntimeError("SensorTemp is not a Graph. Check again!")
                         
-                        if self.testinfo.get("check_sensor_temperature") == True:
-                            # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
-                            #              Sensor Temperature and timestamps from DQM ROOT file               #
-                            # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
-                            dqm_dir = f"Detector/Board_{ibrd}/OpticalGroup_{iopt}"
-
-                            graph_temp = None
-                            if not from_db:
-                                graph_temp = dqm_ptr.Get(f"{dqm_dir}/D_B({ibrd})_LpGBT_DQM_SensorTemp_OpticalGroup({iopt})")
-                            else :
-                                graph_temp = dqm_ptr.Get("Monitor/ENV_Temperature")
-                                if not isinstance(graph_temp, ROOT.TGraph):
-                                    graph_temp = dqm_ptr.Get("Monitor/ENV_temperature")
+                    #from IPython import embed; embed()
                             
-                            get_point_x = lambda graph_temp : [graph_temp.GetPointX(i) for i in range(graph_temp.GetN())]
-                            get_point_y = lambda graph_temp : [graph_temp.GetPointY(i) for i in range(graph_temp.GetN())]
-                            time_stamps  = get_point_x(graph_temp)
-                            sensor_temps = get_point_y(graph_temp)
-
-                            # Save the timestamp & temp in the dict
-                            main_noise_dict[module_tag][temperature_key][test_iter].update({"time_stamps" : self.__format_datetime(time_stamps)})
-                            main_noise_dict[module_tag][temperature_key][test_iter].update({"sensor_temps": sensor_temps})
-                        else:
-                            logger.warning("skip checking sensor temperature data")
+                    get_point_x = lambda graph_temp : [graph_temp.GetPointX(i) for i in range(graph_temp.GetN())]
+                    get_point_y = lambda graph_temp : [graph_temp.GetPointY(i) for i in range(graph_temp.GetN())]
+                    time_stamps  = get_point_x(graph_temp)
+                    sensor_temps = get_point_y(graph_temp)
+                    
+                    # Save the timestamp & temp in the dict
+                    main_noise_dict[module_tag].update({"time_stamps" : self.__format_datetime(time_stamps)})
+                    main_noise_dict[module_tag].update({"sensor_temps": sensor_temps})
+                else:
+                    logger.warning("skip checking sensor temperature data")
                             
-                        # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
-                        #              Channel/STrip noise from the main results ROOT file                #
-                        # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
-                        strip_noise_dict = self.__prepare_noise_data(root_ptr,
-                                                                     ibrd,
-                                                                     iopt,
-                                                                     hname_hb=self.fileinfo['strip_noise_hname_hybrid_level'],
-                                                                     hname_hb_bot=self.fileinfo['strip_noise_hname_hybrid_level_bottom'],
-                                                                     hname_hb_top=self.fileinfo['strip_noise_hname_hybrid_level_top'],
-                                                                     hname_cbc=self.fileinfo['strip_noise_hname_chip_level'],
-                                                                     hname_cbc_bot=self.fileinfo['strip_noise_hname_chip_level_bottom'],
-                                                                     hname_cbc_top=self.fileinfo['strip_noise_hname_chip_level_top'],
-                                                                     cbc_level=True,
-                                                                     noise_type="strip")
+                # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
+                #              Channel/STrip noise from the main results ROOT file                #
+                # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
+                strip_noise_dict = self.__prepare_noise_data(root_ptr,
+                                                             ibrd,
+                                                             iopt,
+                                                             hname_hb=self.fileinfo['strip_noise_hname_hybrid_level'],
+                                                             hname_hb_bot=self.fileinfo['strip_noise_hname_hybrid_level_bottom'],
+                                                             hname_hb_top=self.fileinfo['strip_noise_hname_hybrid_level_top'],
+                                                             hname_cbc=self.fileinfo['strip_noise_hname_chip_level'],
+                                                             hname_cbc_bot=self.fileinfo['strip_noise_hname_chip_level_bottom'],
+                                                             hname_cbc_top=self.fileinfo['strip_noise_hname_chip_level_top'],
+                                                             cbc_level=True,
+                                                             noise_type="strip")
+                
+                main_noise_dict[module_tag].update(strip_noise_dict)
                         
-                        main_noise_dict[module_tag][temperature_key][test_iter].update(strip_noise_dict)
+                # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
+                #                Common mode noise from the main results ROOT file                #
+                # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
+                if self.testinfo.get("check_common_noise") == True:
+                    common_noise_dict = self.__prepare_noise_data(root_ptr,
+                                                                  ibrd,
+                                                                  iopt,
+                                                                  hname_mod=self.fileinfo['common_noise_hname_module_level'],
+                                                                  hname_mod_bot=self.fileinfo['common_noise_hname_module_level_bottom'],
+                                                                  hname_mod_top=self.fileinfo['common_noise_hname_module_level_top'],
+                                                                  hname_hb=self.fileinfo['common_noise_hname_hybrid_level'],
+                                                                  hname_hb_bot=self.fileinfo['common_noise_hname_hybrid_level_bottom'],
+                                                                  hname_hb_top=self.fileinfo['common_noise_hname_hybrid_level_top'],
+                                                                  hname_cbc=self.fileinfo['common_noise_hname_chip_level'],
+                                                                  hname_cbc_bot=self.fileinfo['common_noise_hname_chip_level_bottom'],
+                                                                  hname_cbc_top=self.fileinfo['common_noise_hname_chip_level_top'],
+                                                                  cbc_level=True,
+                                                                  noise_type="common")
+                    
+                    main_noise_dict[module_tag].update(common_noise_dict)
+
+                    if self.testinfo.get("fit_simultaneous_common_noise") == True:
+                        common_3sigma_noise_dict = self.__prepare_noise_data(root_ptr,
+                                                                             ibrd,
+                                                                             iopt,
+                                                                             hname_mod=self.fileinfo['common_noise_3sigma_hname_module_level'],
+                                                                             hname_mod_bot=self.fileinfo['common_noise_3sigma_hname_module_level_bottom'],
+                                                                             hname_mod_top=self.fileinfo['common_noise_3sigma_hname_module_level_top'],
+                                                                             hname_hb=self.fileinfo['common_noise_3sigma_hname_hybrid_level'],
+                                                                             hname_hb_bot=self.fileinfo['common_noise_3sigma_hname_hybrid_level_bottom'],
+                                                                             hname_hb_top=self.fileinfo['common_noise_3sigma_hname_hybrid_level_top'],
+                                                                             hname_cbc=self.fileinfo['common_noise_3sigma_hname_chip_level'],
+                                                                             hname_cbc_bot=self.fileinfo['common_noise_3sigma_hname_chip_level_bottom'],
+                                                                             hname_cbc_top=self.fileinfo['common_noise_3sigma_hname_chip_level_top'],
+                                                                             cbc_level=True,
+                                                                             noise_type="common_3sigma")
                         
-                        # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
-                        #                Common mode noise from the main results ROOT file                #
-                        # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #
-                        if self.testinfo.get("check_common_noise") == True:
-                            common_noise_dict = self.__prepare_noise_data(root_ptr,
-                                                                          ibrd,
-                                                                          iopt,
-                                                                          hname_mod=self.fileinfo['common_noise_hname_module_level'],
-                                                                          hname_mod_bot=self.fileinfo['common_noise_hname_module_level_bottom'],
-                                                                          hname_mod_top=self.fileinfo['common_noise_hname_module_level_top'],
-                                                                          hname_hb=self.fileinfo['common_noise_hname_hybrid_level'],
-                                                                          hname_hb_bot=self.fileinfo['common_noise_hname_hybrid_level_bottom'],
-                                                                          hname_hb_top=self.fileinfo['common_noise_hname_hybrid_level_top'],
-                                                                          hname_cbc=self.fileinfo['common_noise_hname_chip_level'],
-                                                                          hname_cbc_bot=self.fileinfo['common_noise_hname_chip_level_bottom'],
-                                                                          hname_cbc_top=self.fileinfo['common_noise_hname_chip_level_top'],
-                                                                          cbc_level=True,
-                                                                          noise_type="common")
-                            
-                            main_noise_dict[module_tag][temperature_key][test_iter].update(common_noise_dict)
-
-                            if self.testinfo.get("fit_simultaneous_common_noise") == True:
-                                common_3sigma_noise_dict = self.__prepare_noise_data(root_ptr,
-                                                                                     ibrd,
-                                                                                     iopt,
-                                                                                     hname_mod=self.fileinfo['common_noise_3sigma_hname_module_level'],
-                                                                                     hname_mod_bot=self.fileinfo['common_noise_3sigma_hname_module_level_bottom'],
-                                                                                     hname_mod_top=self.fileinfo['common_noise_3sigma_hname_module_level_top'],
-                                                                                     hname_hb=self.fileinfo['common_noise_3sigma_hname_hybrid_level'],
-                                                                                     hname_hb_bot=self.fileinfo['common_noise_3sigma_hname_hybrid_level_bottom'],
-                                                                                     hname_hb_top=self.fileinfo['common_noise_3sigma_hname_hybrid_level_top'],
-                                                                                     hname_cbc=self.fileinfo['common_noise_3sigma_hname_chip_level'],
-                                                                                     hname_cbc_bot=self.fileinfo['common_noise_3sigma_hname_chip_level_bottom'],
-                                                                                     hname_cbc_top=self.fileinfo['common_noise_3sigma_hname_chip_level_top'],
-                                                                                     cbc_level=True,
-                                                                                     noise_type="common_3sigma")
-                                
-                                main_noise_dict[module_tag][temperature_key][test_iter].update(common_3sigma_noise_dict)
+                        main_noise_dict[module_tag].update(common_3sigma_noise_dict)
                             
 
-                        if self.testinfo.get("check_pedestal") == True:
-                            pede_dict = self.__prepare_pede_data(root_ptr,
-                                                                 ibrd,
-                                                                 iopt,
-                                                                 hname_cbc=self.fileinfo['pede_hname_chip_level'])
-                            main_noise_dict[module_tag][temperature_key][test_iter].update(pede_dict)
-                        else:
-                            logger.info("skip checking pedestal info")
-
-
-                        if self.testinfo.get("check_extra") == True:
-                            extra_dict = self.__get_extra_info(root_ptr,
-                                                               ibrd,
-                                                               iopt)
-                            main_noise_dict[module_tag][temperature_key][test_iter].update(extra_dict)
-                        else:
-                            logger.info("skip checking extra info, like S-Curve, LightYieldScans, BERT etc.")
+                if self.testinfo.get("check_pedestal") == True:
+                    pede_dict = self.__prepare_pede_data(root_ptr,
+                                                         ibrd,
+                                                         iopt,
+                                                         hname_cbc=self.fileinfo['pede_hname_chip_level'])
+                    main_noise_dict[module_tag].update(pede_dict)
+                else:
+                    logger.info("skip checking pedestal info")
+                    
+                    
+                if self.testinfo.get("check_extra") == True:
+                    extra_dict = self.__get_extra_info(root_ptr,
+                                                       ibrd,
+                                                       iopt)
+                    main_noise_dict[module_tag].update(extra_dict)
+                else:
+                    logger.info("skip checking extra info, like S-Curve, LightYieldScans, BERT etc.")
 
                             
         return main_noise_dict
@@ -715,8 +754,7 @@ class DataLoader:
         main_noise_dict = {}
         
         nboards        = self.fileinfo["n_boards"]
-        #nopticals      = self.fileinfo["n_opticals"]
-        nopticals      = [self.fileinfo["n_opticals_start"], self.fileinfo["n_opticals_stop"]]
+        OGlist         = self.fileinfo["opticalgroups"]
         root_file_info = self.fileinfo["files"]
 
         if self.in_kira & self.in_ladder:
@@ -726,12 +764,12 @@ class DataLoader:
         if self.in_ladder:
             module_info    = self.fileinfo["moduleinfo"]
             main_noise_dict = self.__get_data_for_ladder(nboards,
-                                                         nopticals,
+                                                         OGlist,
                                                          root_file_info,
                                                          module_info)
         elif self.in_kira:
             main_noise_dict = self.__get_data_for_kira(nboards,
-                                                       nopticals,
+                                                       OGlist,
                                                        root_file_info)
         
         else:

@@ -1,0 +1,102 @@
+# Cuts to be used for QC of the integrated ladders
+# name of the fields should be identical to the histogram names in the Ladder.root file
+# IMPORTANT STRATEGY:
+#   - Use the cuts (range) on PostInt histograms
+#   - In addition, compare the PreInt and PostInt histograms (flagged by prepostcomp)
+#   - If range is kept null, but prepostcomp = yes, compare pre and post only and raise a flag
+#   - Keeping both range and prepostcomp null is obsolete
+# If range is None, that cut should not be applied, and if prepost is ON
+#   - In that case, if pre-post diff is zero, grade will be A else B
+# Modules per ladder will be graded as A / B / C
+# PrePostComparison column will show the exact difference
+# e.g. the final result will look like
+# ---------------------------------------------------------------------------------------------
+# [Grade] Ladder : LadderID [ColdBox Slot : <Slot No.>]                                        |
+# ---------------------------------------------------------------------------------------------
+# Feature                 |  2S_18_6_KIT-10012 (OG-0)  |  2S_18_6_NCP-10033 (OG-1) | ......... |
+# ---------------------------------------------------------------------------------------------
+# pedestal_std_hb0        |             A              |              A            |           |
+# strip_noise_hb0         |             A              |              B            |           |
+# ............                                                                                 |
+# sensor_temp             |             B              |              B            |           |
+# ---------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------
+# [PrePostDifference] Ladder : LadderID [ColdBox Slot : <Slot No.>]                            |
+# ---------------------------------------------------------------------------------------------
+# Feature                 |  2S_18_6_KIT-10012 (OG-0)  |  2S_18_6_NCP-10033 (OG-1) | ......... |
+# ---------------------------------------------------------------------------------------------
+# pedestal_std_hb0        |           0.2              |          0.01             |           |
+# strip_noise_hb0         |           0.7              |           0.3             |           |
+# ............                                                                                 |
+# sensor_temp             |            NA              |           NA              |           |
+# ---------------------------------------------------------------------------------------------
+
+
+
+pedestal_std_hb0:
+  range:
+    A : [0.0, 0.5]
+    B : [0.5, 0.8]
+    C : [0.8, 10.0]
+  prepostcomp: yes
+
+pedestal_std_hb1:
+  range:
+    A : [0.0, 0.5]
+    B : [0.5, 0.8]
+    C : [0.8, 10.0]
+  prepostcomp: yes
+
+strip_noise_hb0:
+  range:
+    A : [4.0, 8.0]
+    B : [8.0, 20.0]
+    C : [0.0, 4.0]
+  prepostcomp: yes
+
+strip_noise_hb1:
+  range:
+    A : [4.0, 8.0]
+    B : [8.0, 20.0]
+    C : [0.0, 4.0]  
+  prepostcomp: yes
+
+common_noise_frac_hb0:
+  range:
+    A : [0.0, 0.25]
+    B : [0.25, 0.35]
+    C : [0.35, 0.50]
+  prepostcomp: yes
+
+common_noise_frac_hb1:
+  range:
+    A : [0.0, 0.25]
+    B : [0.25, 0.35]
+    C : [0.35, 0.50]
+  prepostcomp: yes
+
+
+# DO NOT FORGET TO ADD THE CO2 SETPOINT TEMP WITH THE FOLLOWING CUTS
+sensor_temperature:
+  range:
+    A : [5.0, 7.0]
+    B : [7.0, 10.0]
+    C : [10.0, 99.0]
+  prepostcomp: no
+
+n_noisy_ch_hb0:
+  range: null
+  prepostcomp: yes
+
+n_noisy_ch_hb1:
+  range: null
+  prepostcomp: yes
+
+n_broken_ch_hb0:
+  range: null
+  prepostcomp: yes
+
+n_broken_ch_hb1:
+  range: null
+  prepostcomp: yes
