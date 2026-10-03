@@ -20,6 +20,8 @@ import pandas as pd
 import argparse
 from datetime import datetime
 
+import logging
+logger = logging.getLogger('main')
 
 
 def load_cfg(cfg):
@@ -76,7 +78,7 @@ class Histogrammer():
     def setMonitorGraphStyle(self, graph):
         graph.SetMarkerStyle(self.markerStyle)
         graph.SetMarkerSize(self.markerSize)
-        graph.SetLineColor(ROOT.kBlue)
+        graph.SetLineColor(ROOT.kRed)
         graph.SetLineWidth(self.lineWidth)
         graph.SetLineStyle(ROOT.kSolid)
         # Configure x-axis to display time correctly
@@ -86,7 +88,7 @@ class Histogrammer():
         graph.GetXaxis().SetTimeOffset(0)
 
 
-    def setIVGraphStyle(self, graph, color=ROOT.kBlue):
+    def setIVGraphStyle(self, graph, color=ROOT.kRed):
         graph.SetMarkerStyle(self.markerStyle)
         graph.SetMarkerSize(self.markerSizeIV)
         graph.SetLineColor(color)
@@ -126,7 +128,7 @@ class Histogrammer():
         timestamps = convert_timestamps_to_float(timestamps,TIME_FORMAT_1)
         graph = self.makeGraph(timestamps, values)
         graph.SetName("HV_Current")
-        graph.SetTitle(f"HV Current - {moduleID};Local Time;Current [-µA]")
+        graph.SetTitle(f"HV Current - {moduleID};Local Time;Current [-uA]")
         self.setMonitorGraphStyle(graph)
         return graph
 
@@ -183,17 +185,57 @@ class Histogrammer():
     
     def makeIVCurve(self, voltages, currents, moduleID=None):
         if np.sum(voltages < 0) > np.sum(voltages > 0):
-            voltages = -voltages
+            voltages = np.where(voltages == 0, voltages, -voltages)
 
         if np.sum(currents < 0) > np.sum(currents > 0):
             currents = -currents
 
+        #from IPython import embed; embed()
+            
         graph = ROOT.TGraph(len(voltages), voltages, currents)
         graph.SetName("IV_Current");
         graph.SetTitle(f"IV Curve - {moduleID};Voltage [-V];Current [-uA]")
         self.setIVGraphStyle(graph)
         return graph
 
+
+    def makeIVEnvironment(self, type, voltages, env, moduleID=None):
+        if np.sum(voltages < 0) > np.sum(voltages > 0):
+            voltages = -voltages
+
+        if type == "Timestamp":
+            env = np.array(convert_timestamps_to_float(env, TIME_FORMAT_1))
+
+        graph = ROOT.TGraph(len(voltages), voltages, env)
+
+        if type == "ENV_Temperature" or type == "CARRIER_Temperature" or type == "SENSOR_Temperature":
+            yAxisTitle = "Temperature [#circC]"
+            color = ROOT.kRed
+            if type == "ENV_Temperature":
+                title = "Environment Temperature"
+            elif type == "CARRIER_Temperature":
+                title = "Carrier Temperature"
+            elif type == "SENSOR_Temperature":
+                title = "Sensor Temperature"
+        elif type == "Humidity":
+            yAxisTitle = "Relative Humidity [%]"
+            color = ROOT.kGreen
+            title = "Environment Humidity"
+        elif type == "Timestamp":
+            yAxisTitle = "Local Time"
+            color = ROOT.kBlack
+            title = type
+            graph.GetYaxis().SetTimeDisplay(1)
+            graph.GetYaxis().SetNdivisions(self.timeDivision)
+            graph.GetYaxis().SetTimeFormat(TIME_FORMAT_1)
+            graph.GetYaxis().SetTimeOffset(0)
+
+        graph.SetName("IV_" + type);
+        graph.SetTitle(f"{title} vs Voltage - {moduleID};Voltage [-V];{yAxisTitle}")
+        self.setIVGraphStyle(graph)
+        return graph
+
+    
 
     
 # ------------------------------------------------------------ #
@@ -231,8 +273,22 @@ class MonitorPS(Monitor):
     def extract(self):
         df = self.loadcsv()
         pattern,rh_pattern,temp_pattern,dewp_pattern = self.getpattern()
+        #out_dict = {
+        #    f'OpticalGroup_{i-1}' : {
+        #        'HV': {
+        #            'timestamp':[],
+        #            'voltage': [],
+        #            'current': []
+        #        },
+        #        'LV': {
+        #            'timestamp':[],
+        #            'voltage': [],
+        #            'current': []
+        #        },
+        #    } for i in self.PS_channels
+        #}
         out_dict = {
-            f'OpticalGroup_{i-1}' : {
+            f'OpticalGroup_{i}' : {
                 'HV': {
                     'timestamp':[],
                     'voltage': [],
@@ -243,7 +299,7 @@ class MonitorPS(Monitor):
                     'voltage': [],
                     'current': []
                 },
-            } for i in self.PS_channels
+            } for i in range(12)
         }
         env_dict = {
             'timestamp' : [],
@@ -251,7 +307,9 @@ class MonitorPS(Monitor):
             'temperature': [],
             'dewpoint': []
         }
-        
+
+        #from IPython import embed; embed()
+        is_in_pos_1 = int(self.PS_channels[0])+int(self.PS_channels[-1]) == 13 
         last_timestamp = None
         
         for _, row in df.iterrows():
@@ -264,16 +322,28 @@ class MonitorPS(Monitor):
                 
                 vtype = match.group("vtype")
                 channel = int(match.group("channel"))
-        
-                if channel > int(self.PS_channels[-1]) :
-                    continue
+
+                if is_in_pos_1:
+                    if channel > 12:
+                        continue
+                else:
+                    if channel < 13:
+                        continue
+
+                        
+                #if channel > int(self.PS_channels[-1]) :
+                #    continue
 
                 voltage = float(match.group("voltage"))
                 current = float(match.group("current"))
                 
-                out_dict[f'OpticalGroup_{channel-1}'][vtype]['timestamp'].append(last_timestamp)
-                out_dict[f'OpticalGroup_{channel-1}'][vtype]['voltage'].append(voltage)
-                out_dict[f'OpticalGroup_{channel-1}'][vtype]['current'].append(current)
+                #out_dict[f'OpticalGroup_{channel-1}'][vtype]['timestamp'].append(last_timestamp)
+                #out_dict[f'OpticalGroup_{channel-1}'][vtype]['voltage'].append(voltage)
+                #out_dict[f'OpticalGroup_{channel-1}'][vtype]['current'].append(current)
+                out_dict[f'OpticalGroup_{channel-self.PS_channels[0]}'][vtype]['timestamp'].append(last_timestamp)
+                out_dict[f'OpticalGroup_{channel-self.PS_channels[0]}'][vtype]['voltage'].append(voltage)
+                out_dict[f'OpticalGroup_{channel-self.PS_channels[0]}'][vtype]['current'].append(current)
+
 
             rh_match = re.search(rh_pattern, s)
             if rh_match:
@@ -328,11 +398,21 @@ class MonitorIV(Monitor):
     def extract(self):
         df = self.loadcsv()
         V = df['Voltage'].astype(float).to_numpy() 
-        I = df['Current'].astype(float).to_numpy() 
+        I = df['Current'].astype(float).to_numpy()
+        LV_V = df['LV voltage'].astype(float).to_numpy()
+        LV_I = df['LV current'].astype(float).to_numpy()
+        TS = df['time'].astype(str).to_numpy()
+        TEMP = df['temperature'].astype(float).to_numpy()
+        HUMD = df['humidity'].astype(float).to_numpy()
         
         return {
             'voltage': V,
-            'current': I
+            'current': I,
+            'LV_voltage': LV_V,
+            'LV_current': LV_I,
+            'time_stamp':TS,
+            'env_temp':TEMP,
+            'humidity':HUMD,
         }
 
 
@@ -388,15 +468,15 @@ def get_idx_at_configuration(PS_ts, logf):
     if np.sum(mask_unconf) > 0:
         PS_ts_unconf_idx = PS_ts_index[mask_unconf][0]
     else:
-        print(f"W A R N I N G : time stamp of module unconfigured from Ph2ACF log is out of range of the PS time stamps --> UNUSUAL")
-        print("setting it to the 1st index : dummy")
+        logger.warning(f"W A R N I N G : time stamp of module unconfigured from Ph2ACF log is out of range of the PS time stamps --> UNUSUAL")
+        logger.warning("setting it to the 1st index : dummy")
         PS_ts_unconf_idx = PS_ts_index[0]
 
     if np.sum(mask_conf) > 0:
         PS_ts_conf_idx = PS_ts_index[mask_conf][0]
     else:
-        print(f"W A R N I N G : time stamp of module configured from Ph2ACF log is out of range of the PS time stamps --> UNUSUAL")
-        print("setting it to the 1st index : dummy")
+        logger.warning(f"W A R N I N G : time stamp of module configured from Ph2ACF log is out of range of the PS time stamps --> UNUSUAL")
+        logger.warning("setting it to the 1st index : dummy")
         PS_ts_conf_idx = PS_ts_index[0]
         
     return PS_ts_unconf_idx, PS_ts_conf_idx
@@ -411,10 +491,10 @@ def main(args):
     REAL_START = time.perf_counter()
     CPU_START  = time.time()
     
-    print(f"\nLadder --> Module level splitting ===>> {args.split}\n")
+    logger.info(f"\nLadder --> Module level splitting ===>> {args.split}\n")
     if args.split == False:
-        print("Just to add ModuleIDs per OpticalGroup")
-        print("Use -s in the cmdline to enable splitting\n")
+        logger.info("Just to add ModuleIDs per OpticalGroup")
+        logger.info("Use -s in the cmdline to enable splitting\n")
     
     CFG_FILE = args.config
     CFG = load_cfg(CFG_FILE)
@@ -429,11 +509,12 @@ def main(args):
     ladID    = CFG.get('LADDER')
     coolTemp = CFG.get('COOLING_TEMP')
 
+    LADDER_POS = CFG.get("LADDER_POS")
 
     # Open input file in Read mode
     infilename = CFG.get("INPUT_FILE")
     infile = ROOT.TFile(infilename, "READ")
-    print(f"Ph2ACF Ladder Output file as the input here : {infilename}\n")
+    logger.info(f"Ph2ACF Ladder Output file as the input here : {infilename}\n")
 
     TDir_Infile_Det = infile.Get("Detector")
     
@@ -449,29 +530,45 @@ def main(args):
     board_ip       = TDir_Infile_Brd.GetKey('D_NameId_Board_(0)').ReadObj()
     
     
-    print(f"Calibration     : {test_type}")    
-    print(f"Ph2-ACF version : {ph2acf_version}")
-    print(f"Ph2-ACF commit  : {ph2acf_commit}")
-    print(f"Host PC         : {host_pc}")
-    print(f"START           : {start_time}")
-    print(f"STOP            : {stop_time}\n")
-    print(f"Board IP        : {board_ip}")
-    print(f"Ladder ID       : {ladID}")
-    print(f"Cooling Temp    : {coolTemp}\n")
+    logger.info(f"Calibration     : {test_type}")    
+    logger.info(f"Ph2-ACF version : {ph2acf_version}")
+    logger.info(f"Ph2-ACF commit  : {ph2acf_commit}")
+    logger.info(f"Host PC         : {host_pc}")
+    logger.info(f"START           : {start_time}")
+    logger.info(f"STOP            : {stop_time}\n")
+    logger.info(f"Board IP        : {board_ip}")
+    logger.info(f"Ladder ID       : {ladID}")
+    logger.info(f"Ladder Pos      : {LADDER_POS}")
+    logger.info(f"Cooling Temp    : {coolTemp}\n")
 
 
     
     # Creating an output file in Write mode and then copy the contents
     outfile_ladder = None
-    outfile_ladder_name = f"Ladder_{ladID}_{fmt_start_time}_{coolTemp}_{test_type}_{ph2acf_version}.root"
+    cooltemp_sign = '+' if coolTemp > 0 else '-'
+    outfile_ladder_name = f"TB2S_Ladder_{ladID}_{fmt_start_time}_{cooltemp_sign}{abs(coolTemp)}C_{test_type}_{ph2acf_version}.root"
 
-    print(f"💾 ==> Copying file content from infile to an another file : {outfile_ladder_name}\n")
+    logger.info(f"💾 ==> Copying file content from infile to an another file : {outfile_ladder_name}\n")
     outfile_ladder = ROOT.TFile.Open(f"{OUTDIR}/{outfile_ladder_name}", "RECREATE")
     det_out_ladder = outfile_ladder.mkdir("Detector")
     copy_dir(infile.Get("Detector"), det_out_ladder)
+    #outfile_ladder.Write() # Output file is written here
+    #infile.Close()         # Input file is closed 
+
+    # Read Ladder Analysis ROOT File
+    LADDER_ANA_ROOT_FILE = CFG.get('LADDER_ANALYSIS_ROOT_FILE', None)
+    if LADDER_ANA_ROOT_FILE:
+        if not os.path.exists(LADDER_ANA_ROOT_FILE):
+            raise Exception(f'{LADDER_ANA_ROOT_FILE} Not Found ... Run Ladder Analysis First' )
+        ladfile = ROOT.TFile(LADDER_ANA_ROOT_FILE, "READ")
+        out_lad_dir = outfile_ladder.mkdir("Ladder")
+        copy_dir(ladfile.Get("Ladder"), out_lad_dir)
+        
     outfile_ladder.Write() # Output file is written here
     infile.Close()         # Input file is closed 
-
+    if ladfile:
+        ladfile.Close()
+        
     # Getting the Detector and Board_0 TDirectories from the output file
     TDir_Detector_Aux = outfile_ladder.Get("Detector")
     TDir_Board_Aux    = outfile_ladder.Get("Detector/Board_0")
@@ -479,11 +576,11 @@ def main(args):
 
     dqm_file_name = CFG.get("DQM_FILE")
     dqm_file = ROOT.TFile(dqm_file_name, "READ")
-    print(f"DQM --> Ph2ACF Ladder Monitor-Histogram file : {dqm_file_name}\n")
+    logger.info(f"DQM --> Ph2ACF Ladder Monitor-Histogram file : {dqm_file_name}\n")
 
     monitor_dqm_dir = outfile_ladder.mkdir('MonitorDQM')
     monitor_dqm_det_dir = monitor_dqm_dir.mkdir('Detector')
-    print(f"📝 ==> Adding MonitorDQM Histograms")
+    logger.info(f"📝 ==> Adding MonitorDQM Histograms")
     copy_dir(dqm_file.Get("Detector"), monitor_dqm_det_dir)
 
 
@@ -491,7 +588,7 @@ def main(args):
     #                                   Summary                                    #
     #        Fill with fStrings with info taken from several TDirectories          #
     # ---------------------------------------------------------------------------- #
-    print(f"🧩 ==> Initiate Summary Directory")
+    logger.info(f"🧩 ==> Initiate Summary Directory")
     summary_dir = outfile_ladder.mkdir('Summary')
     summary_det_dir = summary_dir.mkdir('Detector')
     summary_det_brd_dir = summary_det_dir.mkdir('Board_0')
@@ -504,21 +601,25 @@ def main(args):
     # ---------------------------------------------------------------------------- #
 
     # Create Monitor TDirectory
-    print(f"🧩 ==> Initiate Monitor Directory")
+    logger.info(f"🧩 ==> Initiate Monitor Directory")
     monitor_ps_dir = outfile_ladder.mkdir('Monitor')
     monitor_ps_det_dir = monitor_ps_dir.mkdir('Detector')
     monitor_ps_det_brd_dir = monitor_ps_det_dir.mkdir('Board_0')
 
     # Monitor PowerSupply and ColdBox Env : Read csv file, extract data and plot TGraph
-    print(f" ... Read PS csv and add in Monitor")
+    logger.info(f" ... Read PS csv and add in Monitor")
     monitor_ps_file = CFG.get('PS_MONITOR_FILE')
-    ps_channels = CFG.get('PS_CHANNELS')
-    channels_connected = np.arange(24)[ps_channels[0]:ps_channels[1]] + 1
+    #ps_channels = CFG.get('PS_CHANNELS')
+    #channels_connected = np.arange(24)[ps_channels[0]:ps_channels[1]] + 1
+    channels_connected = np.arange(1,13) if LADDER_POS == 1 else np.arange(13,25)
     
     monitor_ps_obj = MonitorPS(csvfile = monitor_ps_file,
                                ps_channels = channels_connected)
     PS_dict,ENV_dict = monitor_ps_obj.extract()
 
+    # get date-time from ps file name
+    dt_ps_match = re.search(r'(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})', os.path.basename(monitor_ps_file))
+    
 
     #from IPython import embed; embed()
     # coldbox env
@@ -529,10 +630,10 @@ def main(args):
     
     dqm_vtrxoff_file_name = CFG.get("DQM_VTRX_OFF_FILE")
     dqm_vtrxoff_file = ROOT.TFile(dqm_vtrxoff_file_name, "READ")
-    print(f"DQM --> Ph2ACF Ladder Monitor-Histogram file (VTRX Off) : {dqm_vtrxoff_file_name}\n")
+    logger.info(f"DQM --> Ph2ACF Ladder Monitor-Histogram file (VTRX Off) : {dqm_vtrxoff_file_name}\n")
 
     Ph2ACF_Log = CFG.get("PH2ACF_LOG_FILE")
-    print(f"Ph2ACF Log --> {Ph2ACF_Log}")
+    logger.info(f"Ph2ACF Log --> {Ph2ACF_Log}")
     
     hist_obj = Histogrammer()
 
@@ -593,25 +694,40 @@ def main(args):
 
         write_string(summary_og_dir, "Environment T at start of Module Test (C)", env_temperature[0]) # add to summary
         write_string(summary_og_dir, "Environment T at stop of Module Test (C)", env_temperature[-1]) # add to summary
+        write_string(summary_og_dir, "Carrier T at start of Module Test (C)", env_temperature[0]) # add to summary
+        write_string(summary_og_dir, "Carrier T at stop of Module Test (C)", env_temperature[-1]) # add to summary
+        write_string(summary_og_dir, "Chiller setpoint T at start of Module Test (C)", coolTemp) # add to summary
+        write_string(summary_og_dir, "Chiller setpoint T at stop of Module Test (C)", coolTemp) # add to summary
+        write_string(summary_og_dir, "Carrier T at stop of Module Test (C)", env_temperature[-1]) # add to summary
         write_string(summary_og_dir, "RH at start of Module Test (%)", env_humidity[0]) # add to summary
         write_string(summary_og_dir, "RH at stop of Module Test (%)", env_humidity[-1]) # add to summary
                 
-        gr_env_T  = hist_obj.makeMonitorEnvTemp(env_timestamp, env_temperature, moduleID=MODULE_POS[OG])
-        gr_env_H  = hist_obj.makeMonitorEnvHumidity(env_timestamp, env_humidity, moduleID=MODULE_POS[OG])
-        gr_env_DP = hist_obj.makeMonitorEnvDewP(env_timestamp, env_dewpoint, moduleID=MODULE_POS[OG])
+        if len(env_temperature) > 0:
+            gr_env_T  = hist_obj.makeMonitorEnvTemp(env_timestamp, env_temperature, moduleID=MODULE_POS[OG])
+            monitor_ps_det_brd_og_dir.WriteObject(gr_env_T,  gr_env_T.GetName())
+            gr_carr_T  = hist_obj.makeMonitorCarrTemp(env_timestamp, env_temperature, moduleID=MODULE_POS[OG])
+            monitor_ps_det_brd_og_dir.WriteObject(gr_carr_T,  gr_carr_T.GetName())
+        else:
+            logger.warning("    env_temperature not found inside MonitorPS data")
+            
+        if len(env_humidity) > 0:
+            gr_env_H  = hist_obj.makeMonitorEnvHumidity(env_timestamp, env_humidity, moduleID=MODULE_POS[OG])
+            monitor_ps_det_brd_og_dir.WriteObject(gr_env_H,  gr_env_H.GetName())
+        else:
+            logger.warning("    env_humidity not found inside MonitorPS data")
+            
+        #from IPython import embed; embed()
+        if len(env_dewpoint) > 0:
+            gr_env_DP = hist_obj.makeMonitorEnvDewP(env_timestamp, env_dewpoint, moduleID=MODULE_POS[OG])
+            monitor_ps_det_brd_og_dir.WriteObject(gr_env_DP, gr_env_DP.GetName())
+        else:
+            logger.warning("    env_dewpoint not found inside MonitorPS data")
         
-        
-        monitor_ps_det_brd_og_dir.WriteObject(gr_env_T,  gr_env_T.GetName())
-        monitor_ps_det_brd_og_dir.WriteObject(gr_env_H,  gr_env_H.GetName())
-        monitor_ps_det_brd_og_dir.WriteObject(gr_env_DP, gr_env_DP.GetName())
 
-
-        gr_carr_T  = hist_obj.makeMonitorCarrTemp(env_timestamp, env_temperature, moduleID=MODULE_POS[OG])
-        monitor_ps_det_brd_og_dir.WriteObject(gr_carr_T,  gr_carr_T.GetName())
 
         # Set Chiller SP here
         gr_chil_sp_T = hist_obj.makeMonitorChilTemp(env_timestamp,
-                                                    0 - np.ones_like(env_temperature)*30.0,
+                                                    np.ones_like(env_temperature)*float(coolTemp),
                                                     moduleID=MODULE_POS[OG])
         monitor_ps_det_brd_og_dir.WriteObject(gr_chil_sp_T,  gr_chil_sp_T.GetName())
         
@@ -635,11 +751,11 @@ def main(args):
     #                  Monitor History : Keep it same as Monitor                   #
     # ---------------------------------------------------------------------------- #
     
-    print(f"🧩 ==> Initiate MonitorHistory Directory")           
+    logger.info(f"🧩 ==> Initiate MonitorHistory Directory")           
     monitor_his_ps_dir = outfile_ladder.mkdir('MonitorHistory')
     monitor_his_ps_det_dir = monitor_his_ps_dir.mkdir('Detector')
     monitor_his_ps_det_brd_dir = monitor_his_ps_det_dir.mkdir('Board_0')
-    print(f" ... Copy Monitor in MonitorHistory")
+    logger.info(f" ... Copy Monitor in MonitorHistory")
     for OG in MODULE_POS:
         monitor_his_ps_det_brd_og_dir = monitor_his_ps_det_brd_dir.mkdir(OG)
         copy_dir(monitor_ps_det_brd_dir.GetDirectory(OG), monitor_his_ps_det_brd_og_dir)
@@ -650,42 +766,59 @@ def main(args):
     #                                       IV                                     #
     # ---------------------------------------------------------------------------- #
 
-    print(f"🧩 ==> Initiate IV Directory")
+    logger.info(f"🧩 ==> Initiate IV Directory")
     IV_dir = outfile_ladder.mkdir('IV')
     IV_det_dir = IV_dir.mkdir('Detector')
     IV_det_brd_dir = IV_det_dir.mkdir('Board_0')
     
     
     IV_csv_dir = CFG.get('IV_FILE_DIR')
-    print(f" ... Read IV csv per channel and add in IV Dir per OG")
+    logger.info(f" ... Read IV csv per channel and add in IV Dir per OG")
     for ch in channels_connected:
-        OG = f'OpticalGroup_{ch-1}'
+        OG = f'OpticalGroup_{ch - int(channels_connected[0])}'
         key = MODULE_POS[OG]
         file = f'{IV_csv_dir}/{key}_HV#{ch}.csv'
-        #print(file)
+        #logger.info(file)
         if not os.path.exists(file):
             raise Exception(f'{file} not found')
         monitor_IV_obj = MonitorIV(csvfile = file)
         IV_dict = monitor_IV_obj.extract()
 
         voltage = IV_dict['voltage']
-        current = IV_dict['current']
+        current = IV_dict['current']/1000.0
+        IV_ts   = IV_dict['time_stamp']
+        IV_envT = IV_dict['env_temp']
+        IV_relH = IV_dict['humidity']
 
         summary_og_dir = summary_det_brd_dir.GetDirectory(OG)
+        write_string(summary_og_dir, "LV Current during IV (A)", IV_dict['LV_current'][0]/1000.0) # add to summary
         write_string(summary_og_dir, "HV Current at start of IV (uA)", current[0]) # add to summary
-        write_string(summary_og_dir, "HV Current at stop of IV (uA)", current[-1]) # add to summary 
-
+        write_string(summary_og_dir, "HV Current at stop of IV (uA)", current[-1]) # add to summary
+        write_string(summary_og_dir, "Environment T at start of IV (C)", IV_envT[0]) # add to summary
+        write_string(summary_og_dir, "Environment T at stop of IV (C)", IV_envT[-1]) # add to summary
+        write_string(summary_og_dir, "Carrier T at start of IV (C)", IV_envT[0]) # add to summary
+        write_string(summary_og_dir, "Carrier T at stop of IV (C)", IV_envT[-1]) # add to summary
+        write_string(summary_og_dir, "Chiller Setpoint T at start of IV (C)", coolTemp) # add to summary
+        write_string(summary_og_dir, "Chiller Setpoint T at stop of IV (C)", coolTemp) # add to summary
+        write_string(summary_og_dir, "RH at start of IV (%)", IV_relH[0]) # add to summary
+        write_string(summary_og_dir, "RH at stop of IV (%)", IV_relH[-1]) # add to summary
         
-        gr_IV_c = hist_obj.makeIVCurve(voltage, current, moduleID=key)
+        
+        gr_IV_c    = hist_obj.makeIVCurve(voltage, current, moduleID=key)
+        gr_IV_ts   = hist_obj.makeIVEnvironment('Timestamp', voltage, IV_ts, moduleID=key)
+        gr_IV_relH = hist_obj.makeIVEnvironment('Humidity', voltage, IV_relH, moduleID=key)
+        gr_IV_envT = hist_obj.makeIVEnvironment('ENV_Temperature', voltage, IV_envT, moduleID=key)
+        gr_IV_carT = hist_obj.makeIVEnvironment('CARRIER_Temperature', voltage, IV_envT, moduleID=key)
         
         if not IV_det_brd_dir.GetDirectory(OG):
             IV_det_brd_dir.mkdir(OG)
-
         IV_det_brd_og_dir = IV_det_brd_dir.GetDirectory(OG)
 
         IV_det_brd_og_dir.WriteObject(gr_IV_c, gr_IV_c.GetName())
-
-
+        IV_det_brd_og_dir.WriteObject(gr_IV_ts, gr_IV_ts.GetName())
+        IV_det_brd_og_dir.WriteObject(gr_IV_relH, gr_IV_relH.GetName())
+        IV_det_brd_og_dir.WriteObject(gr_IV_envT, gr_IV_envT.GetName())
+        IV_det_brd_og_dir.WriteObject(gr_IV_carT, gr_IV_carT.GetName())
 
 
     # ---------------------------------------------------------------------------- #
@@ -694,34 +827,52 @@ def main(args):
 
 
     _info = CFG.get('EXTRA_INFO')
-    print(f"🧩 ==> Initiate Info Directory")
+    logger.info(f"🧩 ==> Initiate Info Directory")
     info_dir = outfile_ladder.mkdir("Info")
     info_dir.WriteObject(ROOT.TObjString(f"{_info['Setup']}"), "Setup")
-    info_dir.WriteObject(ROOT.TObjString(test_type), "Tasks")
-    info_dir.WriteObject(ROOT.TObjString(TDir_Detector_Aux.GetKey('GitTag_Detector').ReadObj()), "Version")
-    info_dir.WriteObject(ROOT.TObjString(TDir_Detector_Aux.GetKey('GitCommitHash_Detector').ReadObj()), "Commit")
+
+    # make a task list
+    #tasks = [
+    #    {'Index': 0, 'Information': 'Start_PSMonitoring_CAEN', 'Task': 'PSMonitoring', 'Timestamp': dt_ps_match.group(1)},
+    #    {'Index': 1, 'Information': 'Set_VTRX_Off',            'Task': 'VTRXoff',      'Timestamp': '' },
+    #    {'Index': 2, 'Information': 'Reboot_PS',               'Task': 'RebootPS',     'Timestamp': '' },
+    #    {'Index': 3, 'Information': 'Start_IV',                'Task': 'IV',           'Timestamp': '' },
+    #    {'Index': 4, 'Information': 'Stop_IV',                 'Task': 'IV',           'Timestamp': '' },
+    #    {'Index': 5, 'Information': 'Start_Ph2ACF',            'Task': 'calibration',  'Timestamp': '' },
+    #    {'Index': 6, 'Information': 'Stop_Ph2ACF',             'Task': 'calibration',  'Timestamp': '' },
+    #    {'Index': 7, 'Information': 'Stop_PSMonitoring_CAEN',  'Task': 'PSMonitoring', 'Timestamp': '' },
+    #]
+    
+    #info_dir.WriteObject(ROOT.TObjString(f"{tasks}"), "Tasks")
+    info_dir.WriteObject(ROOT.TObjString("tasks"), "Tasks")
+    info_dir.WriteObject(ROOT.TObjString(_info['Timezone']), "Timezone")
+    info_dir.WriteObject(ROOT.TObjString(test_type), "Task")
+    info_dir.WriteObject(ROOT.TObjString(_info['Comment']), "Comment")
+    info_dir.WriteObject(ROOT.TObjString(f"{start_time}"), "Date")
+    info_dir.WriteObject(ROOT.TObjString(f"{_info['RunNo']}"), "LocalRunNumber")
+    info_dir.WriteObject(ROOT.TObjString(_info['Location']), "Location")
+    info_dir.WriteObject(ROOT.TObjString(ladID), "Ladder_ID")    
+    info_dir.WriteObject(ROOT.TObjString(TDir_Detector_Aux.GetKey('GitCommitHash_Detector').ReadObj()), "Ph2_ACF_Commit")
     info_dir.WriteObject(ROOT.TObjString(TDir_Board_Aux.GetKey('D_NameId_Board_(0)').ReadObj()), "Board_IP")
     info_dir.WriteObject(ROOT.TObjString(f"{TDir_Detector_Aux.GetKey('Username_Detector').ReadObj()}@{TDir_Detector_Aux.GetKey('HostName_Detector').ReadObj()}"), "UserHost_PC")
     info_dir.WriteObject(ROOT.TObjString(TDir_Detector_Aux.GetKey('CalibrationStartTimestamp_Detector').ReadObj()), "StartDateTime")
     info_dir.WriteObject(ROOT.TObjString(TDir_Detector_Aux.GetKey('CalibrationStopTimestamp_Detector').ReadObj()), "StopDateTime")
-    info_dir.WriteObject(ROOT.TObjString(f"{_info['RunNo']}"), "LocalRunNumber")
-    info_dir.WriteObject(ROOT.TObjString(_info['Location']), "Location")
+    info_dir.WriteObject(ROOT.TObjString(f"{_info['LadderSlot']}"), "Ladder_Slot")
+    info_dir.WriteObject(ROOT.TObjString(f"{coolTemp}"), "Cooling_Setpoint")
+    info_dir.WriteObject(ROOT.TObjString(""), "Module_Parts")
     info_dir.WriteObject(ROOT.TObjString(_info['Operator']), "Operator")
+    info_dir.WriteObject(ROOT.TObjString(test_type), "Ph2_ACF_Test")
+    info_dir.WriteObject(ROOT.TObjString(TDir_Detector_Aux.GetKey('GitTag_Detector').ReadObj()), "Ph2_ACF_Version")
     info_dir.WriteObject(ROOT.TObjString(_info['ResultFolder']), "Result_Folder")
     info_dir.WriteObject(ROOT.TObjString(_info['RunType']), "Run_Type")
     info_dir.WriteObject(ROOT.TObjString(_info['StationName']), "Station_Name")
-    info_dir.WriteObject(ROOT.TObjString(ladID), "Ladder_ID")
-    info_dir.WriteObject(ROOT.TObjString(f"{_info['LadderSlot']}"), "Ladder_Slot")
-    info_dir.WriteObject(ROOT.TObjString(coolTemp), "Cooling_Setpoint")
-    info_dir.WriteObject(ROOT.TObjString(_info['Comment']), "Comment")
-
 
     
     OGs = args.opticalgroup
     if OGs == [-1]:
         OGs = list(range(12))
 
-    print(f"\n>> OpticalGroup indices : {OGs}\n\n")
+    logger.info(f"\n>> OpticalGroup indices : {OGs}\n\n")
 
     
     info_obj = outfile_ladder.Get("Info")
@@ -737,7 +888,7 @@ def main(args):
         obj = board_dir.Get(name)
         
         if not obj:
-            print(f"⚠️  OpticalGroup_{OG} not found in Board_0")
+            logger.warning(f"⚠️  OpticalGroup_{OG} not found in Board_0")
             continue
         if not isinstance(obj, ROOT.TDirectory):
             raise RuntimeError(f"‼️  OpticalGroup_{OG} is not a TDirectory")
@@ -745,7 +896,7 @@ def main(args):
         dqm_obj = dqm_board_dir.Get(name)
 
         if not dqm_obj:
-            print(f"⚠️  OpticalGroup_{OG} not found in Board_0 in MonitorHistogram file")
+            logger.warning(f"⚠️  OpticalGroup_{OG} not found in Board_0 in MonitorHistogram file")
             continue
         if not isinstance(dqm_obj, ROOT.TDirectory):
             raise RuntimeError(f"‼️  OpticalGroup_{OG} is not a TDirectory")
@@ -757,7 +908,7 @@ def main(args):
         summary_det_brd_og_obj = summary_det_brd_dir.GetDirectory(f"OpticalGroup_{OG}")
         
         modID = MODULE_POS[name]
-        print(f"📝 ==> Adding ModuleID : {modID} to D_B(0)_NameId_OpticalGroup({OG})")
+        logger.info(f"📝 ==> Adding ModuleID : {modID} to D_B(0)_NameId_OpticalGroup({OG})")
         add_modID(obj, modID, OG)
 
 
@@ -769,19 +920,19 @@ def main(args):
         dqm_dir = obj.mkdir("MonitorDQM")
         copy_dir(dqm_obj, dqm_dir, skipdir=True)
         obj.Write("", ROOT.TObject.kOverwrite)
-        print(f"📝 ==> Adding TGraphs from Monitor Histogram file to D_B(0)_NameId_OpticalGroup({OG})\n")
+        logger.info(f"📝 ==> Adding TGraphs from Monitor Histogram file to D_B(0)_NameId_OpticalGroup({OG})\n")
         """
         
         if args.split == True:        
-            print(f"⚙️  ==> Assigning Name to the ROOT file for {name}")
+            logger.info(f"⚙️  ==> Assigning Name to the ROOT file for {name}")
             lpgbt_id = obj.GetKey(f"D_B(0)_LpGBTFuseId_OpticalGroup({OG})").ReadObj()
             vtrx_id  = obj.GetKey(f"D_B(0)_VTRxFuseId_OpticalGroup({OG})").ReadObj()
-            print(f" ... LpGBTID    : {lpgbt_id}")
-            print(f" ... VTRxID     : {vtrx_id}")
+            logger.info(f" ... LpGBTID    : {lpgbt_id}")
+            logger.info(f" ... VTRxID     : {vtrx_id}")
             
             #outfilename = f"Results__{test_type}__{modID}__{name}__Ladder_{ladID}__CO2_{coolTemp}.root"
-            outfilename = f"{modID}_{fmt_start_time}_{coolTemp}_{test_type}_{ph2acf_version}.root"
-            print(f" >>> File Name  : {outfilename}")
+            outfilename = f"{modID}_{fmt_start_time}_{cooltemp_sign}{abs(coolTemp)}C_{test_type}_{ph2acf_version}.root"
+            logger.info(f" >>> File Name  : {outfilename}")
 
             outfilename = f"{OUTDIR}/{outfilename}"
             outfile = ROOT.TFile(outfilename, "RECREATE")
@@ -790,13 +941,13 @@ def main(args):
             board_out = det_out.mkdir("Board_0")
             group_out = board_out.mkdir(name)
 
-            print(f"💾 ==> Copying everything from OpticalGroup TDirectory to {name} ROOT file")
+            logger.info(f"💾 ==> Copying everything from OpticalGroup TDirectory to {name} ROOT file")
             copy_dir(obj, group_out)
 
-            print(f"💾 ==> Copying TObjStrings from Board_0 TDirectory to {name} ROOT file")
+            logger.info(f"💾 ==> Copying TObjStrings from Board_0 TDirectory to {name} ROOT file")
             copy_dir(TDir_Board_Aux, board_out, skipdir=True)
             
-            print(f"💾 ==> Copying TObjStrings from Detector TDirectory to {name} ROOT file")
+            logger.info(f"💾 ==> Copying TObjStrings from Detector TDirectory to {name} ROOT file")
             copy_dir(TDir_Detector_Aux, det_out, skipdir=True)
 
 
@@ -822,21 +973,22 @@ def main(args):
             info_out  = outfile.mkdir("Info")
             copy_dir(info_obj, info_out)
             info_out.WriteObject(ROOT.TObjString(modID), "Module_ID")
+            info_out.WriteObject(ROOT.TObjString(f'OpticalGroup{OG}'), "Module_Slot")
 
             
             outfile.Write("", ROOT.TObject.kOverwrite)
             outfile.Close()
-            print(f"✅ Wrote {outfilename}\n")
+            logger.info(f"✅ Wrote {outfilename}\n")
 
         
-    print(f"✅ Wrote {outfile_ladder_name} with ModuleIDs as NameId_OpticalGroup \n")
+    logger.info(f"✅ Wrote {outfile_ladder_name} with ModuleIDs as NameId_OpticalGroup \n")
     outfile_ladder.Close()
 
     REAL_STOP = time.perf_counter()
     CPU_STOP  = time.time()
 
-    print(f"Real time : {round(REAL_STOP - REAL_START, 2)} seconds")
-    print(f"CPU time  : {round(CPU_STOP - CPU_START, 2)} seconds")
+    logger.info(f"Real time : {round(REAL_STOP - REAL_START, 2)} seconds")
+    logger.info(f"CPU time  : {round(CPU_STOP - CPU_START, 2)} seconds")
 
 
 
