@@ -45,121 +45,14 @@ source setup.sh
     - The main script is `main.py`
     - two mandatory inputs are `Ph2ACF Calibration Results directory` and `Ph2ACF VTRXoff Results directory`
       ```bash
-      python3 main.py -i /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/FinalTest/TB2SLadders__pos_1__TB2S_Ladder_minus_6CP_9__pos_2__TB2S_Ladder_plus_5CP_4__+15C__2SfullTest__2026-10-02_10_58_18 -ivtrx /Users/gsaha/Work/IPHC/TrackerUpgrade/Inputs/FinalTest/TB2SLadders__pos_1__TB2S_Ladder_minus_6CP_9__pos_2__TB2S_Ladder_plus_5CP_4__+15C__vtrxoff__2026-10-02_10_50_02 -s [#to split the merged potato compatible ROOT file] -qccfg "bla.yaml" [#default is "qc_config.yaml"]
+      python3 main.py -i path/to/2SfullTest -ivtrx path/to/vtrxoff -s <#to split the merged potato compatible ROOT file> -qccfg "bla.yaml" <#default is "qc_config.yaml">
       ```
-    - The two `Ph2ACF` Results-dir must have the folliwng structure:
-        -
-	```bash
-	TB2SLadders__pos_1__TB2S_Ladder_<lad-1-id>__pos_2__TB2S_Ladder_<lad-2-id>__<cooling>__<calibname>__<datetime>
-	# e.g.
-	# lad-1-id  : minus_6CP_9
-	# lad-2-id  : plus_5CP_4
-	# cooling   : +15C or -30C
-	# calibname : 2SfullTest / 2SquickTest / vtrxoff
-	# datetime  : 2026-10-02_10_50_02
-	```
-	-
-	```bash
-	TB2SLadders__pos_1__TB2S_Ladder_minus_6CP_9__pos_2__TB2S_Ladder_plus_5CP_4__+15C__vtrxoff__2026-10-02_10_50_02
-	├── IV
-	│   └── iv_curves
-	│       ├── 2S_18_5_BRN-01001_HV#1.csv
-	│       ├── 2S_18_6_KIT-10022_HV#13.csv
-	│       ├── ...
-	│       └── 2S_18_6_NCP-10023_HV#8.csv
-	├── LOG_MAIN_STEPS.csv
-	├── MonitorMarta.csv
-	├── MonitorPS.csv
-	├── Pos_1__TB2S_Ladder_minus_6CP_9
-	│   ├── TB2S_Ladder_minus_6CP_9_ambient_vtrxoff_1.log
-	│   └── ambient
-	│       ├── MonitorResults
-	│       │   └── MonitorDQM_2026-10-02_10-50-04.root
-	│       ├── Results
-	│       │   └── Run_0
-	│       │       └── Results.root
-	│       ├── RunNumbers.dat
-	│       ├── logs
-	│       │   ├── Ph2_ACF.log
-	│       │   ├── Ph2_ACF_debug.log
-	│       │   ├── Ph2_ACF_err.log
-	│       │   ├── Ph2_ACF_fatal.log
-	│       │   └── Ph2_ACF_warn.log
-	│       └── myeasylog.log
-	└── Pos_2__TB2S_Ladder_plus_5CP_4
-    	    ├── TB2S_Ladder_plus_5CP_4_ambient_vtrxoff_2.log
-    	    └── ambient
-            	├── MonitorResults
-            	│   └── MonitorDQM_2026-10-02_10-50-06.root
-            	├── Results
-            	│   └── Run_0
-            	│       └── Results.root
-            	├── RunNumbers.dat
-        	├── logs
-        	│   ├── Ph2_ACF.log
-        	│   ├── Ph2_ACF_debug.log
-        	│   ├── Ph2_ACF_err.log
-        	│   ├── Ph2_ACF_fatal.log
-        	│   └── Ph2_ACF_warn.log
-        	└── myeasylog.log
-	```
-	-
-	```bash
-	TB2SLadders__pos_1__TB2S_Ladder_minus_6CP_9__pos_2__TB2S_Ladder_plus_5CP_4__+15C__2SfullTest__2026-10-02_10_58_18
-	├── Pos_1__TB2S_Ladder_minus_6CP_9
-	│   ├── PreIntResults
-	│   │   ├── 2S_18_5_BRN-01001
-	│   │   │   ├── MonitorDQM_2025-12-15_11-27-48.root
-	│   │   │   └── Results.root
-	│   │   ├── ...
-	│   │   └── 2S_18_6_NCP-10023
-	│   │       ├── MonitorDQM_2026-01-13_15-19-14.root
-	│   │       └── Results.root
-	│   ├── TB2S_Ladder_minus_6CP_9_ambient_2SfullTest_1.log
-	│   └── ambient
-	│       ├── MonitorResults
-	│       │   └── MonitorDQM_2026-10-02_10-58-20.root
-	│       ├── Results
-	│       │   └── Run_0
-	│       │       └── Results.root
-	│       ├── RunNumbers.dat
-	│       ├── logs
-	│       │   ├── Ph2_ACF.log
-	│       │   ├── Ph2_ACF_debug.log
-	│       │   ├── Ph2_ACF_err.log
-	│       │   ├── Ph2_ACF_fatal.log
-	│       │   └── Ph2_ACF_warn.log
-	│       └── myeasylog.log
-	└── Pos_2__TB2S_Ladder_plus_5CP_4
-	    ├── PreIntResults
-	    │   ├── 2S_18_6_KIT-10022
-    	    │   │   └── 2S_18_6_KIT-10022_2025-08-05_15h05m03s_+23C_2SfullTest_v6-16.root
-    	    │   ├── ...
-    	    │   └── 2S_18_6_NCP-10010
-    	    │       ├── MonitorDQM_2026-03-20_11-26-10.root
-    	    │       └── Results.root
-    	    ├── TB2S_Ladder_plus_5CP_4_ambient_2SfullTest_2.log
-    	    └── ambient
-            	├── MonitorResults
-        	│   └── MonitorDQM_2026-10-02_10-58-22.root
-        	├── Results
-        	│   └── Run_0
-        	│       └── Results.root
-        	├── RunNumbers.dat
-        	├── logs
-        	│   ├── Ph2_ACF.log
-        	│   ├── Ph2_ACF_debug.log
-        	│   ├── Ph2_ACF_err.log
-        	│   ├── Ph2_ACF_fatal.log
-        	│   └── Ph2_ACF_warn.log
-        	└── myeasylog.log
-	```
-    - IMPORTANT:
-      - The `PreInt Results` should be downloaded before hand, and the best strategy would be to check if the files are correct.
-      - Perhaps, we should not add the `downloading Preint results` task to the maste GUI controller.
-      - The files should come from `2SfullTest` and `Potato-converted` from `DCA`.
-      - If one/two files are found missing from `DCA`, it would be better to test the modules in the single module box.
-      - We need to coume-up with some smart idea, however, if we finally decide to overlook the pre-int results, the `preint check` can be made optional.
+  - IMPORTANT:
+    - The `PreInt Results` should be downloaded before hand, and the best strategy would be to check if the files are correct.
+    - Perhaps, we should not add the `downloading Preint results` task to the maste GUI controller.
+    - The files should come from `2SfullTest` and `Potato-converted` from `DCA`.
+    - If one/two files are found missing from `DCA`, it would be better to test the modules in the single module box.
+    - We need to coume-up with some smart idea, however, if we finally decide to overlook the pre-int results, the `preint check` can be made optional.
 
 
 ## The final output structure
